@@ -60,7 +60,7 @@ export default function App() {
 
     try {
       const res = await fetch(
-        `${API_BASE}/${email}`
+        `${API_BASE}/learning-paths/${email}`
       );
 
       if (!res.ok) {
