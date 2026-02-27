@@ -9,6 +9,8 @@ import { Sprout, TrendingUp, Award } from 'lucide-react';
 import { BarChart3, Calculator, Brain, Database, PieChart } from 'lucide-react';
 import { Target, Lightbulb, Users as UsersGoalIcon, Rocket, Clock } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_URL;
+
 interface HybridChatInterfaceProps {
   username: string;
   onComplete: (
@@ -111,7 +113,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
   useEffect(() => {
     const createDraft = async () => {
       try {
-        const res = await fetch("http://localhost:8000/learning-paths/draft", {
+        const res = await fetch("${API_BASE}/learning-paths/draft", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
@@ -150,7 +152,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
         : String(selectedOption);
     }
 
-    await fetch(`http://localhost:8000/learning-path/${pathId}/response`, {
+    await fetch(`${API_BASE}/learning-path/${pathId}/response`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)

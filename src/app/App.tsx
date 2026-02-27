@@ -53,12 +53,14 @@ export default function App() {
     setCurrentScreen('login');
   };
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   const handleLogin = async (email: string) => {
     setUserEmail(email);
 
     try {
       const res = await fetch(
-        `http://localhost:8000/learning-paths/${email}`
+        `${API_BASE}/${email}`
       );
 
       if (!res.ok) {
@@ -128,7 +130,7 @@ export default function App() {
   const handleSelectPath = async (path: SavedLearningPath) => {
     try {
       const res = await fetch(
-        `http://localhost:8000/learning-path/${path.id}`
+        `${API_BASE}/learning-path/${path.id}`
       );
 
       if (!res.ok) {
@@ -174,7 +176,7 @@ export default function App() {
 
       // 1️⃣ Complete path
       const completeRes = await fetch(
-        `http://localhost:8000/learning-path/${pathId}/complete`,
+        `${API_BASE}/learning-path/${pathId}/complete`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -193,7 +195,7 @@ export default function App() {
 
       // 2️⃣ Fetch full generated path
       const fullRes = await fetch(
-        `http://localhost:8000/learning-path/${pathId}`
+        `${API_BASE}/learning-path/${pathId}`
       );
 
       const fullData = await fullRes.json();
@@ -213,7 +215,7 @@ export default function App() {
 
       // ✅ 3️⃣ REFRESH USER'S LEARNING PATHS HERE
       const res = await fetch(
-        `http://localhost:8000/learning-paths/${userEmail}`
+        `${API_BASE}/learning-paths/${userEmail}`
       );
 
       const backendPaths = await res.json();
