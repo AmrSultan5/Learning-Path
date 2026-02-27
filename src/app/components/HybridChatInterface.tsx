@@ -113,7 +113,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
   useEffect(() => {
     const createDraft = async () => {
       try {
-        const res = await fetch("${API_BASE}/learning-paths/draft", {
+        const res = await fetch(`${API_BASE}/learning-paths/draft`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username })
