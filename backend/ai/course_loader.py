@@ -1,0 +1,52 @@
+import pandas as pd
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+CSV_PATH = os.path.join(
+    BASE_DIR,
+    "data",
+    "DIAI Academy eLearning details(Sheet1).csv"
+)
+
+def load_courses():
+    df = pd.read_csv(CSV_PATH)
+
+    grouped_paths = {}
+
+    for _, row in df.iterrows():
+        # A row can contain multiple learning paths separated by comma
+        learning_paths = [lp.strip() for lp in str(row["learning_path"]).split(",")]
+
+        module_name = row["module"]
+        submodule_name = row["sub_module"]
+        duration = int(row["duration_in_minutes"])
+
+        for lp in learning_paths:
+
+            if lp not in grouped_paths:
+                grouped_paths[lp] = {}
+
+            if module_name not in grouped_paths[lp]:
+                grouped_paths[lp][module_name] = []
+
+            grouped_paths[lp][module_name].append({
+                "name": submodule_name,
+                "duration": duration
+            })
+
+    # Convert dictionary to nested structure
+    structured_courses = []
+
+    for lp, modules in grouped_paths.items():
+        structured_courses.append({
+            "learning_path": lp,
+            "modules": [
+                {
+                    "module_name": module_name,
+                    "submodules": submodules
+                }
+                for module_name, submodules in modules.items()
+            ]
+        })
+
+    return structured_courses
