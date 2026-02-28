@@ -82,6 +82,18 @@ class CompleteRequest(BaseModel):
     interests: Optional[List[str]] = None
     goals: Optional[List[str]] = None
 
+class ProgressSaveRequest(BaseModel):
+    user_id: int
+    learning_path_id: int
+    progress_json: Dict[str, bool]
+
+
+class ProgressOut(BaseModel):
+    progress_json: Dict[str, bool]
+
+    class Config:
+        orm_mode = True
+
 # ----------------------------
 # Helper Functions
 # ----------------------------
@@ -445,3 +457,38 @@ def get_learning_path_by_id(path_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Learning path not found")
 
     return path
+
+@app.post("/progress")
+def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
+
+    existing = db.query(models.LearningProgress).filter(
+        models.LearningProgress.user_id == data.user_id,
+        models.LearningProgress.learning_path_id == data.learning_path_id
+    ).first()
+
+    if existing:
+        existing.progress_json = data.progress_json
+    else:
+        new_progress = models.LearningProgress(
+            user_id=data.user_id,
+            learning_path_id=data.learning_path_id,
+            progress_json=data.progress_json
+        )
+        db.add(new_progress)
+
+    db.commit()
+
+    return {"message": "Progress saved"}
+
+@app.get("/progress/{user_id}/{learning_path_id}", response_model=ProgressOut)
+def get_progress(user_id: int, learning_path_id: int, db: Session = Depends(get_db)):
+
+    progress = db.query(models.LearningProgress).filter(
+        models.LearningProgress.user_id == user_id,
+        models.LearningProgress.learning_path_id == learning_path_id
+    ).first()
+
+    if not progress:
+        return {"progress_json": {}}
+
+    return progress

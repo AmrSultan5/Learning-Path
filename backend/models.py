@@ -45,3 +45,14 @@ class Response(Base):
     written_answer = Column(Text, nullable=True)
 
     learning_path = relationship("LearningPath", back_populates="responses")
+
+class LearningProgress(Base):
+    __tablename__ = "learning_progress"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    learning_path_id = Column(Integer, ForeignKey("learning_paths.id"), nullable=False)
+
+    progress_json = Column(JSON, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

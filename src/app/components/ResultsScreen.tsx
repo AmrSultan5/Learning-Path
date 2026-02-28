@@ -2,12 +2,13 @@ import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCir
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PathChatModal } from '@/app/components/PathChatModal';
 import { useSound } from '@/utils/sounds';
 
 interface ResultsScreenProps {
   profile: UserProfile;
+  userId: number;
   learningPathId: number;
   aiSummary: AISummary;
   onRestart: () => void;
@@ -30,7 +31,7 @@ interface AISummary {
   weekly_load_hours: number;
 }
 
-export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }: ResultsScreenProps) {
+export function ResultsScreen({ profile, userId, learningPathId, aiSummary, onRestart }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
   
@@ -38,7 +39,56 @@ export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }:
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { playClick } = useSound();
   const selectedPaths = aiSummary?.selected_paths ?? [];
+  const [completed, setCompleted] = useState<Record<string, boolean>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  useEffect(() => {
+  async function loadProgress() {
+    try {
+      const res = await fetch(
+        `https://learning-path-production-b09f.up.railway.app/progress/${userId}/${learningPathId}`
+      );
+      const data = await res.json();
+
+      if (data.progress_json) {
+        setCompleted(data.progress_json);
+      }
+      setIsLoaded(true);
+    } catch (error) {
+      console.error("Failed to load progress", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }
+
+  if (userId && learningPathId) {
+    loadProgress();
+  }
+}, [userId, learningPathId]);
+
+useEffect(() => {
+  if (!isLoaded || !userId || !learningPathId) return;
+
+  const timeout = setTimeout(async () => {
+    try {
+      await fetch(`https://learning-path-production-b09f.up.railway.app/progress`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          learning_path_id: learningPathId,
+          progress_json: completed
+        })
+      });
+    } catch (error) {
+      console.error("Failed to save progress", error);
+    }
+  }, 800); // waits 800ms after last change
+
+  return () => clearTimeout(timeout);
+}, [completed, userId, learningPathId]);
 
   const openModal = (path: any) => {
     playClick();
@@ -50,6 +100,67 @@ export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }:
     setSelectedPath(null);
     setIsModalOpen(false);
   };
+
+  const toggleSubmodule = (
+    pathIndex: number,
+    moduleIndex: number,
+    subIndex: number
+  ) => {
+    const key = `${pathIndex}-${moduleIndex}-${subIndex}`;
+    setCompleted(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const calculateModuleProgress = (
+  pathIndex: number,
+  moduleIndex: number,
+  submodulesLength: number
+) => {
+  let completedCount = 0;
+
+  for (let i = 0; i < submodulesLength; i++) {
+    const key = `${pathIndex}-${moduleIndex}-${i}`;
+    if (completed[key]) completedCount++;
+  }
+
+  return (completedCount / submodulesLength) * 100;
+};
+
+const calculatePathProgress = (pathIndex: number) => {
+  let total = 0;
+  let done = 0;
+
+  selectedPaths[pathIndex]?.modules.forEach((module, mIndex) => {
+    module.submodules.forEach((_, sIndex) => {
+      total++;
+      const key = `${pathIndex}-${mIndex}-${sIndex}`;
+      if (completed[key]) done++;
+    });
+  });
+
+  return total === 0 ? 0 : (done / total) * 100;
+};
+
+  const calculateOverallProgress = () => {
+    let total = 0;
+    let done = 0;
+
+    selectedPaths.forEach((path, pIndex) => {
+      path.modules.forEach((module, mIndex) => {
+        module.submodules.forEach((_, sIndex) => {
+          total++;
+          const key = `${pIndex}-${mIndex}-${sIndex}`;
+          if (completed[key]) done++;
+        });
+      });
+    });
+
+    return total === 0 ? 0 : (done / total) * 100;
+  };
+
+  const overallProgress = calculateOverallProgress();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -71,6 +182,30 @@ export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }:
           <p className="text-white/90 text-lg">
             Based on your profile, we've created a personalized learning journey for you.
           </p>
+        </div>
+
+        {/* Overall Progress */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <div className="flex justify-between mb-2">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Overall Progress
+            </h2>
+            <span className="text-sm text-[#F40009] font-semibold">
+              {Math.round(overallProgress)}%
+            </span>
+          </div>
+
+          <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+            {overallProgress === 100 && (
+              <div className="mt-4 text-center text-[#F40009] font-bold text-lg">
+                🎉 Congratulations! You completed your full learning journey!
+              </div>
+            )}
         </div>
 
         {/* Profile Summary */}
@@ -108,7 +243,11 @@ export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }:
 
           {selectedPaths.length > 0 && (
             <div className="space-y-4">
-              {selectedPaths.map((path, index) => (
+              {selectedPaths.map((path, index) => {
+                const pathProgress = calculatePathProgress(index);
+
+                return (
+
                 <div
                   key={index}
                   className="bg-white rounded-2xl shadow-lg overflow-hidden"
@@ -138,35 +277,112 @@ export function ResultsScreen({ profile, learningPathId, aiSummary, onRestart }:
 
                   {/* Modules */}
                   <div className="p-6 space-y-6">
-                    {path.modules.map((module, moduleIndex) => (
-                      <div key={moduleIndex}>
-                        <h4 className="text-lg font-semibold text-gray-800 mb-3">
-                          {module.module_name}
-                        </h4>
-
-                        <div className="space-y-2">
-                          {module.submodules.map((sub, subIndex) => (
-                            <a
-                              key={subIndex}
-                              href={path.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex justify-between bg-gray-50 p-3 rounded-lg hover:bg-red-50 transition-all cursor-pointer"
-                            >
-                              <span className="text-sm text-gray-700 hover:text-[#F40009]">
-                                {sub.name}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                {sub.duration} min
-                              </span>
-                            </a>
-                          ))}
-                        </div>
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Path Progress</span>
+                        <span className="text-[#F40009] font-semibold">
+                          {Math.round(pathProgress)}%
+                        </span>
                       </div>
-                    ))}
+
+                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
+                          style={{ width: `${pathProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                    {path.modules.map((module, moduleIndex) => {
+                      const moduleProgress = calculateModuleProgress(
+                        index,
+                        moduleIndex,
+                        module.submodules.length
+                      );
+
+                      return (
+                        <div key={moduleIndex}>
+
+                          {/* Module Title */}
+                          <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-lg font-semibold text-gray-800">
+                              {module.module_name}
+                            </h4>
+
+                            {/* Mark Module Complete Button */}
+                            <button
+                              onClick={() => {
+                                module.submodules.forEach((_, subIndex) => {
+                                  const key = `${index}-${moduleIndex}-${subIndex}`;
+                                  setCompleted(prev => ({
+                                    ...prev,
+                                    [key]: true
+                                  }));
+                                });
+                              }}
+                              className="text-xs text-[#F40009] hover:underline"
+                            >
+                              Mark Complete
+                            </button>
+                          </div>
+
+                          {/* Module Progress */}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-xs mb-1">
+                              <span className="text-gray-500">Module Progress</span>
+                              <span className="text-[#F40009] font-semibold">
+                                {Math.round(moduleProgress)}%
+                              </span>
+                            </div>
+
+                            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                              <div
+                                className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
+                                style={{ width: `${moduleProgress}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Submodules */}
+                          <div className="space-y-2">
+                            {module.submodules.map((sub, subIndex) => (
+                              <div
+                                key={subIndex}
+                                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg hover:bg-red-50 transition-all"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <input
+                                    type="checkbox"
+                                    checked={completed[`${index}-${moduleIndex}-${subIndex}`] || false}
+                                    onChange={() =>
+                                      toggleSubmodule(index, moduleIndex, subIndex)
+                                    }
+                                    className="w-5 h-5 accent-[#F40009] cursor-pointer"
+                                  />
+
+                                  <a
+                                    href={path.link}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-gray-700 hover:text-[#F40009]"
+                                  >
+                                    {sub.name}
+                                  </a>
+                                </div>
+
+                                <span className="text-xs text-gray-500">
+                                  {sub.duration} min
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
