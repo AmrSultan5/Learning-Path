@@ -83,7 +83,9 @@ class CompleteRequest(BaseModel):
     goals: Optional[List[str]] = None
 
 class ProgressSaveRequest(BaseModel):
-    user_id: int
+    username: str
+    learning_path_id: int
+    progress_json: Dict[str, bool]
     learning_path_id: int
     progress_json: Dict[str, bool]
 
@@ -462,7 +464,7 @@ def get_learning_path_by_id(path_id: int, db: Session = Depends(get_db)):
 def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
 
     existing = db.query(models.LearningProgress).filter(
-        models.LearningProgress.user_id == data.user_id,
+        models.LearningProgress.username == data.username,
         models.LearningProgress.learning_path_id == data.learning_path_id
     ).first()
 
@@ -470,7 +472,7 @@ def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
         existing.progress_json = data.progress_json
     else:
         new_progress = models.LearningProgress(
-            user_id=data.user_id,
+            username=data.username,
             learning_path_id=data.learning_path_id,
             progress_json=data.progress_json
         )
@@ -480,11 +482,11 @@ def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
 
     return {"message": "Progress saved"}
 
-@app.get("/progress/{user_id}/{learning_path_id}", response_model=ProgressOut)
-def get_progress(user_id: int, learning_path_id: int, db: Session = Depends(get_db)):
+@app.get("/progress/{username}/{learning_path_id}", response_model=ProgressOut)
+def get_progress(username: int, learning_path_id: int, db: Session = Depends(get_db)):
 
     progress = db.query(models.LearningProgress).filter(
-        models.LearningProgress.user_id == user_id,
+        models.LearningProgress.username == username,
         models.LearningProgress.learning_path_id == learning_path_id
     ).first()
 

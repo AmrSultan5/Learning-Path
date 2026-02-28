@@ -321,6 +321,7 @@ export default function App() {
       {currentScreen === 'results' && aiSummary && learningPathId && (
         <ResultsScreen
           profile={userProfile}
+          username={userEmail}
           learningPathId={learningPathId}
           aiSummary={aiSummary}
           onRestart={handleRestart}

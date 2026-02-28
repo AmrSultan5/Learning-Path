@@ -51,7 +51,7 @@ class LearningProgress(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    username = Column(String, ForeignKey("users.username"), nullable=False)
     learning_path_id = Column(Integer, ForeignKey("learning_paths.id"), nullable=False)
 
     progress_json = Column(JSON, nullable=False)

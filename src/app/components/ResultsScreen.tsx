@@ -8,7 +8,7 @@ import { useSound } from '@/utils/sounds';
 
 interface ResultsScreenProps {
   profile: UserProfile;
-  userId: number;
+  username: string;
   learningPathId: number;
   aiSummary: AISummary;
   onRestart: () => void;
@@ -31,7 +31,7 @@ interface AISummary {
   weekly_load_hours: number;
 }
 
-export function ResultsScreen({ profile, userId, learningPathId, aiSummary, onRestart }: ResultsScreenProps) {
+export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
   
@@ -46,7 +46,7 @@ export function ResultsScreen({ profile, userId, learningPathId, aiSummary, onRe
   async function loadProgress() {
     try {
       const res = await fetch(
-        `https://learning-path-production-b09f.up.railway.app/progress/${userId}/${learningPathId}`
+        `https://learning-path-production-b09f.up.railway.app/progress/${username}/${learningPathId}`
       );
       const data = await res.json();
 
@@ -61,13 +61,13 @@ export function ResultsScreen({ profile, userId, learningPathId, aiSummary, onRe
     }
   }
 
-  if (userId && learningPathId) {
+  if (username && learningPathId) {
     loadProgress();
   }
-}, [userId, learningPathId]);
+}, [username, learningPathId]);
 
 useEffect(() => {
-  if (!isLoaded || !userId || !learningPathId) return;
+  if (!isLoaded || !username || !learningPathId) return;
 
   const timeout = setTimeout(async () => {
     try {
@@ -77,7 +77,7 @@ useEffect(() => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          user_id: userId,
+          username: username,
           learning_path_id: learningPathId,
           progress_json: completed
         })
@@ -88,7 +88,7 @@ useEffect(() => {
   }, 800); // waits 800ms after last change
 
   return () => clearTimeout(timeout);
-}, [completed, userId, learningPathId]);
+}, [completed, username, learningPathId]);
 
   const openModal = (path: any) => {
     playClick();
