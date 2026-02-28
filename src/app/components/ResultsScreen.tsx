@@ -43,6 +43,23 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
   const [isLoaded, setIsLoaded] = useState(false);
   const API_BASE = import.meta.env.VITE_API_URL;
 
+  const overallProgress = useMemo(() => {
+    let total = 0;
+    let done = 0;
+
+    selectedPaths.forEach((path, pIndex) => {
+      path.modules.forEach((module, mIndex) => {
+        module.submodules.forEach((_, sIndex) => {
+          total++;
+          const key = `${pIndex}-${mIndex}-${sIndex}`;
+          if (completed[key]) done++;
+        });
+      });
+    });
+
+    return total === 0 ? 0 : (done / total) * 100;
+  }, [selectedPaths, completed]);
+
   useEffect(() => {
   async function loadProgress() {
     try {
@@ -65,8 +82,6 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
     loadProgress();
   }
 }, [username, learningPathId]);
-
-  const overallProgress = useMemo(() => calculateOverallProgress(), [selectedPaths, completed]);
 
 useEffect(() => {
   if (!isLoaded || !username || !learningPathId) return;
@@ -145,23 +160,6 @@ const calculatePathProgress = (pathIndex: number) => {
 
   return total === 0 ? 0 : (done / total) * 100;
 };
-
-  const calculateOverallProgress = () => {
-    let total = 0;
-    let done = 0;
-
-    selectedPaths.forEach((path, pIndex) => {
-      path.modules.forEach((module, mIndex) => {
-        module.submodules.forEach((_, sIndex) => {
-          total++;
-          const key = `${pIndex}-${mIndex}-${sIndex}`;
-          if (completed[key]) done++;
-        });
-      });
-    });
-
-    return total === 0 ? 0 : (done / total) * 100;
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
