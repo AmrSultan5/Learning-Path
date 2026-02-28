@@ -86,8 +86,6 @@ class ProgressSaveRequest(BaseModel):
     username: str
     learning_path_id: int
     progress_json: Dict[str, bool]
-    learning_path_id: int
-    progress_json: Dict[str, bool]
 
 
 class ProgressOut(BaseModel):
@@ -482,8 +480,8 @@ def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
 
     return {"message": "Progress saved"}
 
-@app.get("/progress/{username}/{learning_path_id}", response_model=ProgressOut)
-def get_progress(username: int, learning_path_id: int, db: Session = Depends(get_db)):
+@app.get("/progress", response_model=ProgressOut)
+def get_progress(username: str, learning_path_id: int, db: Session = Depends(get_db)):
 
     progress = db.query(models.LearningProgress).filter(
         models.LearningProgress.username == username,

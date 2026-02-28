@@ -41,12 +41,13 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
   const selectedPaths = aiSummary?.selected_paths ?? [];
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
+  const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
   async function loadProgress() {
     try {
       const res = await fetch(
-        `https://learning-path-production-b09f.up.railway.app/progress/${username}/${learningPathId}`
+        `${API_BASE}/progress?username=${encodeURIComponent(username)}&learning_path_id=${learningPathId}`
       );
       const data = await res.json();
 
@@ -71,7 +72,7 @@ useEffect(() => {
 
   const timeout = setTimeout(async () => {
     try {
-      await fetch(`https://learning-path-production-b09f.up.railway.app/progress`, {
+      await fetch(`${API_BASE}/progress`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
