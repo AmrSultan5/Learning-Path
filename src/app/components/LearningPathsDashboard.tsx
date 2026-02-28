@@ -43,14 +43,9 @@ export function LearningPathsDashboard({
           );
 
           const data = await res.json();
-          const progressJson = data.progress_json || {};
+          const percent = data.overall_progress ?? 0;
 
-          const total = Object.keys(progressJson).length;
-          const done = Object.values(progressJson).filter(Boolean).length;
-
-          const percent = total === 0 ? 0 : (done / total) * 100;
-
-          return { id: path.id, percent };
+        return { id: path.id, percent };
         } catch {
           return { id: path.id, percent: 0 };
         }

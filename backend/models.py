@@ -28,6 +28,8 @@ class LearningPath(Base):
     recommended_path = Column(String, nullable=True)
     ai_summary = Column(JSON, nullable=True)
 
+    total_submodules = Column(Integer, default=0)
+
     user = relationship("User", back_populates="learning_paths")
     responses = relationship("Response", back_populates="learning_path")
     status = Column(String, default="draft")  # draft or completed
@@ -55,4 +57,5 @@ class LearningProgress(Base):
     learning_path_id = Column(Integer, ForeignKey("learning_paths.id"), nullable=False)
 
     progress_json = Column(JSON, nullable=False)
+    overall_progress = Column(Integer, default=0)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

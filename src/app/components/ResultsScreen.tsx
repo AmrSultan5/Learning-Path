@@ -2,7 +2,7 @@ import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCir
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PathChatModal } from '@/app/components/PathChatModal';
 import { useSound } from '@/utils/sounds';
 
@@ -61,11 +61,12 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
       setIsLoaded(true);
     }
   }
-
   if (username && learningPathId) {
     loadProgress();
   }
 }, [username, learningPathId]);
+
+  const overallProgress = useMemo(() => calculateOverallProgress(), [selectedPaths, completed]);
 
 useEffect(() => {
   if (!isLoaded || !username || !learningPathId) return;
@@ -80,7 +81,8 @@ useEffect(() => {
         body: JSON.stringify({
           username: username,
           learning_path_id: learningPathId,
-          progress_json: completed
+          progress_json: completed,
+          overall_progress: Math.round(overallProgress)
         })
       });
     } catch (error) {
@@ -89,7 +91,7 @@ useEffect(() => {
   }, 800); // waits 800ms after last change
 
   return () => clearTimeout(timeout);
-}, [completed, username, learningPathId]);
+}, [completed, username, learningPathId, overallProgress]);
 
   const openModal = (path: any) => {
     playClick();
@@ -160,8 +162,6 @@ const calculatePathProgress = (pathIndex: number) => {
 
     return total === 0 ? 0 : (done / total) * 100;
   };
-
-  const overallProgress = calculateOverallProgress();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">

@@ -61,6 +61,7 @@ class LearningPathOut(BaseModel):
     interests: Optional[str]
     recommended_path: Optional[str]
     ai_summary: Optional[Dict[str, Any]]
+    total_submodules: Optional[int]
 
     class Config:
         orm_mode = True
@@ -86,11 +87,12 @@ class ProgressSaveRequest(BaseModel):
     username: str
     learning_path_id: int
     progress_json: Dict[str, bool]
+    overall_progress: int
 
 
 class ProgressOut(BaseModel):
     progress_json: Dict[str, bool]
-
+    overall_progress: int
     class Config:
         orm_mode = True
 
@@ -425,6 +427,14 @@ Additional Context:
     # 4️⃣ Save results
     path.recommended_path = "AI Generated Path"
     path.ai_summary = ai_result
+
+    total_submodules = sum(
+        len(module["submodules"])
+        for selected_path in ai_result.get("selected_paths", [])
+        for module in selected_path.get("modules", [])
+    )
+
+    path.total_submodules = total_submodules
     path.status = "completed"
 
     db.commit()
@@ -468,11 +478,13 @@ def save_progress(data: ProgressSaveRequest, db: Session = Depends(get_db)):
 
     if existing:
         existing.progress_json = data.progress_json
+        existing.overall_progress = data.overall_progress
     else:
         new_progress = models.LearningProgress(
             username=data.username,
             learning_path_id=data.learning_path_id,
-            progress_json=data.progress_json
+            progress_json=data.progress_json,
+            overall_progress=data.overall_progress
         )
         db.add(new_progress)
 
@@ -489,6 +501,9 @@ def get_progress(username: str, learning_path_id: int, db: Session = Depends(get
     ).first()
 
     if not progress:
-        return {"progress_json": {}}
+        return {
+            "progress_json": {},
+            "overall_progress": 0
+        }
 
     return progress
