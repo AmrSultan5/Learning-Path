@@ -183,6 +183,29 @@ const calculatePathProgress = (pathIndex: number) => {
           </p>
         </div>
 
+        {/* Profile Summary */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+          <h2 className="text-xl text-gray-800 mb-4">Your Profile</h2>
+          <div className="grid md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-1">Job Function</p>
+              <p className="text-gray-800">{formatJobFunction(profile.jobFunction)}</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-1">Experience</p>
+              <p className="text-gray-800 capitalize">{profile.experienceLevel}</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-1">Interest Areas</p>
+              <p className="text-gray-800">{profile.interests.length}</p>
+            </div>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <p className="text-sm text-gray-600 mb-1">Time Available</p>
+              <p className="text-gray-800">{profile.timeCommitment} hours</p>
+            </div>
+          </div>
+        </div>
+
         {/* Overall Progress */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex justify-between mb-2">
@@ -205,29 +228,6 @@ const calculatePathProgress = (pathIndex: number) => {
                 🎉 Congratulations! You completed your full learning journey!
               </div>
             )}
-        </div>
-
-        {/* Profile Summary */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-xl text-gray-800 mb-4">Your Profile</h2>
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Job Function</p>
-              <p className="text-gray-800">{formatJobFunction(profile.jobFunction)}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Experience</p>
-              <p className="text-gray-800 capitalize">{profile.experienceLevel}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Interest Areas</p>
-              <p className="text-gray-800">{profile.interests.length}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Time Available</p>
-              <p className="text-gray-800">{profile.timeCommitment} hours</p>
-            </div>
-          </div>
         </div>
 
         {/* Recommended Paths */}
