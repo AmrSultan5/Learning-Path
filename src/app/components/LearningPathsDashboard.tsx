@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, BookOpen, Calendar, TrendingUp, LogOut } from 'lucide-react';
 import { useSound } from '@/utils/sounds';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
@@ -29,6 +29,47 @@ export function LearningPathsDashboard({
 }: LearningPathsDashboardProps) {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const { playClick, playTyping } = useSound();
+
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const API_BASE = import.meta.env.VITE_API_URL;
+
+  useEffect(() => {
+  async function loadProgressForPaths() {
+    const results = await Promise.all(
+      savedPaths.map(async (path) => {
+        try {
+          const res = await fetch(
+            `${API_BASE}/progress?username=${encodeURIComponent(userEmail)}&learning_path_id=${path.id}`
+          );
+
+          const data = await res.json();
+          const progressJson = data.progress_json || {};
+
+          const total = Object.keys(progressJson).length;
+          const done = Object.values(progressJson).filter(Boolean).length;
+
+          const percent = total === 0 ? 0 : (done / total) * 100;
+
+          return { id: path.id, percent };
+        } catch {
+          return { id: path.id, percent: 0 };
+        }
+      })
+    );
+
+    const newProgressMap: Record<string, number> = {};
+    results.forEach(r => {
+      newProgressMap[r.id] = r.percent;
+    });
+
+    setProgressMap(newProgressMap);
+  }
+
+  if (savedPaths.length > 0) {
+    loadProgressForPaths();
+  }
+
+}, [savedPaths, userEmail]);
 
   const handleCreateNew = () => {
     playClick();
@@ -143,9 +184,17 @@ export function LearningPathsDashboard({
               {/* Path Icon */}
               <div className="flex items-start justify-between mb-4">
                 <div className="text-4xl">{getPathIcon(path.profile)}</div>
-                <div className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+                  progressMap[path.id] === 100
+                    ? "bg-green-100 text-green-700"
+                    : "bg-blue-100 text-blue-700"
+                }`}>
                   <TrendingUp className="w-3 h-3" />
-                  Active
+                  {progressMap[path.id] === undefined
+                    ? "Loading..."
+                    : progressMap[path.id] === 100
+                      ? "Completed"
+                      : `${Math.round(progressMap[path.id])}%`}
                 </div>
               </div>
 
@@ -181,6 +230,16 @@ export function LearningPathsDashboard({
                       {path.profile.jobFunction.replace('-', ' ')}
                     </span>
                   )}
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mt-3">
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-500"
+                    style={{ width: `${progressMap[path.id] ?? 0}%` }}
+                  />
                 </div>
               </div>
 
