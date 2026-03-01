@@ -60,6 +60,29 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
     return total === 0 ? 0 : (done / total) * 100;
   }, [selectedPaths, completed]);
 
+  // TOTAL TIME FROM AI
+const totalMinutes = aiSummary?.total_minutes ?? 0;
+
+// CALCULATE REMAINING TIME
+const remainingMinutes = useMemo(() => {
+  let deducted = 0;
+
+  selectedPaths.forEach((path, pIndex) => {
+    path.modules.forEach((module, mIndex) => {
+      module.submodules.forEach((sub, sIndex) => {
+        const key = `${pIndex}-${mIndex}-${sIndex}`;
+        if (completed[key]) {
+          deducted += sub.duration;
+        }
+      });
+    });
+  });
+
+  return Math.max(totalMinutes - deducted, 0);
+}, [selectedPaths, completed, totalMinutes]);
+
+const completedMinutes = totalMinutes - remainingMinutes;
+
   useEffect(() => {
   async function loadProgress() {
     try {
@@ -222,6 +245,13 @@ const calculatePathProgress = (pathIndex: number) => {
               className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
               style={{ width: `${overallProgress}%` }}
             />
+          </div>
+          <div className="mt-3 flex justify-between text-sm text-gray-600">
+            <span>Total: {formatMinutes(totalMinutes)}</span>
+            <span>Completed: {formatMinutes(completedMinutes)}</span>
+            <span className="text-[#F40009] font-semibold">
+              Remaining: {formatMinutes(remainingMinutes)}
+            </span>
           </div>
             {overallProgress === 100 && (
               <div className="mt-4 text-center text-[#F40009] font-bold text-lg">
@@ -411,6 +441,15 @@ const calculatePathProgress = (pathIndex: number) => {
       )}
     </div>
   );
+}
+
+function formatMinutes(minutes: number) {
+  const hrs = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hrs === 0) return `${mins} min`;
+  if (mins === 0) return `${hrs} hr`;
+  return `${hrs} hr ${mins} min`;
 }
 
 function formatJobFunction(jobFunction: JobFunction | null): string {
