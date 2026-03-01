@@ -409,23 +409,37 @@ const calculatePathProgress = (pathIndex: number) => {
                             {module.submodules.map((sub, subIndex) => (
                               <div
                                 key={subIndex}
-                                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg hover:bg-red-50 transition-all"
+                                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg transition-all duration-300 hover:bg-red-50 hover:shadow-sm hover:translate-y-[-1px]"
                               >
-                                <div className="flex items-center gap-3">
-                                  <input
-                                    type="checkbox"
-                                    checked={completed[`${index}-${moduleIndex}-${subIndex}`] || false}
-                                    onChange={() =>
+                                <div className="flex items-center gap-3 transition-transform duration-200 ease-out">
+                                  <button
+                                    onClick={() =>
                                       toggleSubmodule(index, moduleIndex, subIndex)
                                     }
-                                    className="w-5 h-5 accent-[#F40009] cursor-pointer"
-                                  />
+                                    className={`
+                                      relative w-6 h-6 flex items-center justify-center
+                                      rounded-md border-2 transition-all duration-300
+                                      ${
+                                        completed[`${index}-${moduleIndex}-${subIndex}`]
+                                          ? "bg-gradient-to-br from-[#F40009] to-[#DC0012] border-[#F40009] shadow-md scale-105"
+                                          : "border-gray-300 bg-white hover:border-[#F40009] hover:shadow-sm"
+                                      }
+                                    `}
+                                  >
+                                    {completed[`${index}-${moduleIndex}-${subIndex}`] && (
+                                      <CheckCircle2 className="w-4 h-4 text-white transition-all duration-200 scale-100" />
+                                    )}
+                                  </button>
 
                                   <a
                                     href={path.link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-sm text-gray-700 hover:text-[#F40009]"
+                                    className={`text-sm transition-all duration-300 ${
+                                      completed[`${index}-${moduleIndex}-${subIndex}`]
+                                        ? "line-through text-gray-400"
+                                        : "text-gray-700 hover:text-[#F40009]"
+                                    }`}
                                   >
                                     {sub.name}
                                   </a>
