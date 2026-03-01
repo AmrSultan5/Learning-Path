@@ -325,6 +325,7 @@ export default function App() {
           learningPathId={learningPathId}
           aiSummary={aiSummary}
           onRestart={handleRestart}
+          onGoToDashboard={() => setCurrentScreen('dashboard')}
         />
       )}
     </div>

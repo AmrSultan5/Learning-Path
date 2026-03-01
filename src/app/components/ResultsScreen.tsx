@@ -12,6 +12,7 @@ interface ResultsScreenProps {
   learningPathId: number;
   aiSummary: AISummary;
   onRestart: () => void;
+  onGoToDashboard: () => void;
 }
 
 interface AISummary {
@@ -31,7 +32,7 @@ interface AISummary {
   weekly_load_hours: number;
 }
 
-export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart }: ResultsScreenProps) {
+export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart, onGoToDashboard }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
   
@@ -472,7 +473,13 @@ const calculatePathProgress = (pathIndex: number) => {
             <RotateCcw className="w-5 h-5" />
             Create Another Learning Path
           </button>
-          <button onClick={playClick} className="px-8 py-3 rounded-full bg-[#F40009] text-white hover:bg-[#DC0012] transition-all shadow-md">
+          <button
+            onClick={() => {
+              playClick();
+              onGoToDashboard();
+            }}
+            className="px-8 py-3 rounded-full bg-[#F40009] text-white hover:bg-[#DC0012] transition-all shadow-md"
+          >
             Save This Learning Journey
           </button>
         </div>
