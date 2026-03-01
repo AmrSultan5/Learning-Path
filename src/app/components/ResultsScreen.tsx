@@ -274,6 +274,29 @@ const calculatePathProgress = (pathIndex: number) => {
             <div className="space-y-4">
               {selectedPaths.map((path, index) => {
                 const pathProgress = calculatePathProgress(index);
+                // TOTAL MINUTES FOR THIS PATH
+                let pathTotalMinutes = 0;
+                let pathDeductedMinutes = 0;
+
+                path.modules.forEach((module, mIndex) => {
+                  module.submodules.forEach((sub, sIndex) => {
+                    pathTotalMinutes += sub.duration;
+
+                    const key = `${index}-${mIndex}-${sIndex}`;
+                    if (completed[key]) {
+                      pathDeductedMinutes += sub.duration;
+                    }
+                  });
+                });
+
+                const pathRemainingMinutes = pathTotalMinutes - pathDeductedMinutes;
+                const pathCompletedMinutes = pathDeductedMinutes;
+
+                // Calculate weekly hours dynamically
+                const weeklyHours = profile.timeCommitment || 1; // fallback safety
+                const pathEstimatedWeeks = Math.ceil(
+                  (pathRemainingMinutes / 60) / weeklyHours
+                );
 
                 return (
 
@@ -296,10 +319,20 @@ const calculatePathProgress = (pathIndex: number) => {
                           AI selected this learning journey based on your {profile.jobFunction} role and {profile.experienceLevel} experience.
                         </p>
 
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex flex-col text-sm mt-2 gap-1">
+                        <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4" />
-                          {aiSummary.estimated_weeks} weeks · {aiSummary.weekly_load_hours} hrs/week
+                          <span>
+                            {pathEstimatedWeeks} weeks · {weeklyHours} hrs/week
+                          </span>
                         </div>
+
+                        <div className="text-xs text-white/90">
+                          Total: {formatMinutes(pathTotalMinutes)} · 
+                          Completed: {formatMinutes(pathCompletedMinutes)} · 
+                          Remaining: {formatMinutes(pathRemainingMinutes)}
+                        </div>
+                      </div>
                       </div>
                     </div>
                   </div>
