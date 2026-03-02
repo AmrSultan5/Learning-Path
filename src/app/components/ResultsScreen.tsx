@@ -324,7 +324,7 @@ const calculatePathProgress = (pathIndex: number) => {
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4" />
                           <span>
-                            {pathEstimatedWeeks} weeks · {weeklyHours} hrs/week
+                            {pathEstimatedWeeks} {weeklyHours} hrs/week
                           </span>
                         </div>
 

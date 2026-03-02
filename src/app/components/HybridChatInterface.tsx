@@ -209,7 +209,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
     setTimeout(() => {
       setIsTyping(false);
       const followUpMessage: Message = {
-        text: "Any more details you want to add to this question? The more you input, the better Hellen+ can fine-tune your learning path. 💡",
+        text: "Any more details you want to add? The more you input, the better Hellen+ can fine-tune your learning path. 💡",
         sender: 'bot',
         timestamp: new Date()
       };
@@ -289,12 +289,12 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
       setSelectedJobFunction(value as JobFunction);
       await addUserMessage(label);
       await saveResponse(undefined, value);
-      showFollowUpQuestion();
+      moveToNextQuestion(); // ✅ directly move
     } else if (currentQuestion === 1) {
       setSelectedExperience(value as ExperienceLevel);
       await addUserMessage(label);
       await saveResponse(undefined, value);
-      showFollowUpQuestion();
+      moveToNextQuestion(); // ✅ directly move
     } else if (currentQuestion === 4) {
       setSelectedTime(value as number);
       await addUserMessage(label);
@@ -323,19 +323,25 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
 
   const confirmMultipleSelection = async () => {
     playClick();
+
     if (currentQuestion === 2 && selectedInterests.length > 0) {
-      const interestLabels = selectedInterests.map(i => 
+      const interestLabels = selectedInterests.map(i =>
         interestAreas.find(a => a.value === i)?.label
       ).join(', ');
+
       await addUserMessage(interestLabels);
       await saveResponse(undefined, selectedInterests);
-      showFollowUpQuestion();
+
+      moveToNextQuestion();
+
     } else if (currentQuestion === 3 && selectedGoals.length > 0) {
-      const goalLabels = selectedGoals.map(g => 
+      const goalLabels = selectedGoals.map(g =>
         goalOptions.find(o => o.value === g)?.label
       ).join(', ');
+
       await addUserMessage(goalLabels);
       await saveResponse(undefined, selectedGoals);
+
       showFollowUpQuestion();
     }
   };
@@ -430,7 +436,11 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
 
     await addUserMessage(currentInput);
     setCurrentInput('');
-    moveToNextQuestion();
+    if (currentQuestion === 3) {
+      showFollowUpQuestion();
+    } else {
+      moveToNextQuestion();
+    }
   };
 
   const renderQuickOptions = () => {
