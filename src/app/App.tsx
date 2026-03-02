@@ -89,21 +89,28 @@ useEffect(() => {
       (exitTime.getTime() - enterTime.getTime()) / 1000
     );
 
+    const screenIdentifier =
+      currentScreen === "results" && learningPathId
+        ? `results:${learningPathId}`
+        : currentScreen;
+
     fetch(`${API_BASE}/activity/log`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         username: userEmail,
         session_id: Number(sessionId),
-        screen_name: currentScreen,
+        screen_name: screenIdentifier,
         enter_time: enterTime.toISOString(),
         exit_time: exitTime.toISOString(),
         duration_seconds: durationSeconds
       })
-    }).catch(err => console.error("Activity log failed:", err));
+    }).catch(err =>
+      console.error("Activity log failed:", err)
+    );
   };
 
-}, [currentScreen]);
+}, [currentScreen, learningPathId]);
 
   const handleLogin = async (email: string) => {
   setUserEmail(email);
