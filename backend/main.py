@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -17,8 +17,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://learning-path-tau.vercel.app"],
-    #allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "https://learning-path-tau.vercel.app",
+        "http://localhost:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -95,6 +97,22 @@ class ProgressOut(BaseModel):
     overall_progress: int
     class Config:
         orm_mode = True
+
+class SessionStartRequest(BaseModel):
+    username: str
+
+
+class SessionEndRequest(BaseModel):
+    session_id: int
+
+
+class ActivityLogRequest(BaseModel):
+    username: str
+    session_id: int
+    screen_name: str
+    enter_time: datetime
+    exit_time: datetime
+    duration_seconds: int
 
 # ----------------------------
 # Helper Functions
@@ -242,6 +260,61 @@ def adapt_to_time(ai_result, total_budget_minutes, experience=None, interests=No
 @app.get("/")
 def home():
     return {"message": "Backend is running 🥤"}
+
+@app.post("/session/start")
+def start_session(data: SessionStartRequest, db: Session = Depends(get_db)):
+
+    # Ensure user exists
+    user = db.query(models.User).filter(
+        models.User.username == data.username
+    ).first()
+
+    if not user:
+        user = models.User(username=data.username)
+        db.add(user)
+        db.commit()
+
+    session = models.UserSession(username=data.username)
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+
+    return {
+        "session_id": session.id,
+        "login_time": session.login_time
+    }
+
+@app.post("/session/end")
+async def end_session(request: Request, db: Session = Depends(get_db)):
+    data = await request.json()
+    session_id = data.get("session_id")
+
+    session = db.query(models.UserSession).filter(
+        models.UserSession.id == session_id
+    ).first()
+
+    if session:
+        session.logout_time = datetime.utcnow()
+        db.commit()
+
+    return {"message": "Session closed"}
+
+@app.post("/activity/log")
+def log_activity(data: ActivityLogRequest, db: Session = Depends(get_db)):
+
+    activity = models.ScreenActivity(
+        username=data.username,
+        session_id=data.session_id,
+        screen_name=data.screen_name,
+        enter_time=data.enter_time,
+        exit_time=data.exit_time,
+        duration_seconds=data.duration_seconds
+    )
+
+    db.add(activity)
+    db.commit()
+
+    return {"message": "Activity logged"}
 
 @app.post("/learning-paths/draft")
 def create_or_get_draft(data: UsernameRequest, db: Session = Depends(get_db)):
@@ -507,3 +580,71 @@ def get_progress(username: str, learning_path_id: int, db: Session = Depends(get
         }
 
     return progress
+
+@app.get("/analytics/user/{username}")
+def get_user_analytics(username: str, db: Session = Depends(get_db)):
+
+    sessions = db.query(models.UserSession).filter(
+        models.UserSession.username == username
+    ).order_by(desc(models.UserSession.login_time)).all()
+
+    result = []
+
+    for session in sessions:
+
+        activities = db.query(models.ScreenActivity).filter(
+            models.ScreenActivity.session_id == session.id
+        ).all()
+
+        screens = []
+
+        for act in activities:
+            screens.append({
+                "screen": act.screen_name,
+                "enter_time": act.enter_time,
+                "exit_time": act.exit_time,
+                "duration_seconds": act.duration_seconds
+            })
+
+        result.append({
+            "session_id": session.id,
+            "login_time": session.login_time,
+            "logout_time": session.logout_time,
+            "screens": screens
+        })
+
+    return {
+        "username": username,
+        "sessions": result
+    }
+
+@app.get("/analytics/user/{username}/summary")
+def get_user_summary(username: str, db: Session = Depends(get_db)):
+
+    sessions = db.query(models.UserSession).filter(
+        models.UserSession.username == username
+    ).all()
+
+    total_sessions = len(sessions)
+
+    total_time = 0
+
+    for session in sessions:
+        if session.logout_time:
+            total_time += (session.logout_time - session.login_time).total_seconds()
+
+    activities = db.query(models.ScreenActivity).filter(
+        models.ScreenActivity.username == username
+    ).all()
+
+    screen_time = {}
+
+    for act in activities:
+        screen_time[act.screen_name] = screen_time.get(act.screen_name, 0) + act.duration_seconds
+
+    return {
+        "username": username,
+        "total_sessions": total_sessions,
+        "total_time_minutes": round(total_time / 60, 1),
+        "time_per_screen_seconds": screen_time
+    }

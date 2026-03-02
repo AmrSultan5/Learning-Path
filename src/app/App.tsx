@@ -10,6 +10,7 @@ import { GeneratingPathScreen } from '@/app/components/GeneratingPathScreen';
 export type JobFunction = 'commercial' | 'supply-chain' | 'marketing' | 'finance' | 'operations' | 'hr' | 'other';
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
 export type InterestArea = 'visualization' | 'statistics' | 'ml-ai' | 'data-engineering' | 'business-intelligence';
+import { useEffect } from 'react';
 
 export interface UserProfile {
   jobFunction: JobFunction | null;
@@ -55,50 +56,130 @@ export default function App() {
 
   const API_BASE = import.meta.env.VITE_API_URL;
 
-  const handleLogin = async (email: string) => {
-    setUserEmail(email);
+  useEffect(() => {
+  const handleUnload = () => {
+    const sessionId = localStorage.getItem("session_id");
 
-    try {
-      const res = await fetch(
-        `${API_BASE}/learning-paths/${email}`
+    if (sessionId) {
+      navigator.sendBeacon(
+        `${API_BASE}/session/end`,
+        JSON.stringify({ session_id: Number(sessionId) })
       );
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch learning paths");
-      }
-
-      const backendPaths = await res.json();
-
-      console.log("USER LEARNING PATHS:", backendPaths);
-
-      const mappedPaths: SavedLearningPath[] = backendPaths.map((path: any) => ({
-        id: path.id.toString(),
-        name: path.name,
-        createdAt: new Date(path.created_at),
-        profile: {
-          jobFunction: path.job_function,
-          experienceLevel: path.experience,
-          interests: [], // backend doesn't store them directly
-          goals: [],
-          responses: [],
-          timeCommitment: path.time_available
-            ? parseInt(path.time_available)
-            : 0
-        },
-        recommendedPath: path.recommended_path
-      }));
-
-      setSavedPaths(mappedPaths);
-      setCurrentScreen('master');
-
-    } catch (err) {
-      console.error("Failed to load paths:", err);
-      setSavedPaths([]);
-      setCurrentScreen('master');
     }
   };
 
-  const handleLogout = () => {
+  window.addEventListener("beforeunload", handleUnload);
+
+  return () => {
+    window.removeEventListener("beforeunload", handleUnload);
+  };
+}, [API_BASE]);
+
+useEffect(() => {
+  if (!userEmail) return;
+
+  const sessionId = localStorage.getItem("session_id");
+  if (!sessionId) return;
+
+  const enterTime = new Date();
+
+  return () => {
+    const exitTime = new Date();
+    const durationSeconds = Math.floor(
+      (exitTime.getTime() - enterTime.getTime()) / 1000
+    );
+
+    fetch(`${API_BASE}/activity/log`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: userEmail,
+        session_id: Number(sessionId),
+        screen_name: currentScreen,
+        enter_time: enterTime.toISOString(),
+        exit_time: exitTime.toISOString(),
+        duration_seconds: durationSeconds
+      })
+    }).catch(err => console.error("Activity log failed:", err));
+  };
+
+}, [currentScreen]);
+
+  const handleLogin = async (email: string) => {
+  setUserEmail(email);
+
+  try {
+    // 🔹 1️⃣ START SESSION FIRST
+    const sessionRes = await fetch(`${API_BASE}/session/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: email })
+    });
+
+    if (!sessionRes.ok) {
+      throw new Error("Failed to start session");
+    }
+
+    const sessionData = await sessionRes.json();
+
+    // Store session info
+    localStorage.setItem("username", email);
+    localStorage.setItem("session_id", sessionData.session_id);
+
+    // 🔹 2️⃣ Then fetch learning paths (your existing logic)
+    const res = await fetch(
+      `${API_BASE}/learning-paths/${email}`
+    );
+
+    if (!res.ok) {
+      throw new Error("Failed to fetch learning paths");
+    }
+
+    const backendPaths = await res.json();
+
+    const mappedPaths: SavedLearningPath[] = backendPaths.map((path: any) => ({
+      id: path.id.toString(),
+      name: path.name,
+      createdAt: new Date(path.created_at),
+      profile: {
+        jobFunction: path.job_function,
+        experienceLevel: path.experience,
+        interests: [],
+        goals: [],
+        responses: [],
+        timeCommitment: path.time_available
+          ? parseInt(path.time_available)
+          : 0
+      },
+      recommendedPath: path.recommended_path
+    }));
+
+    setSavedPaths(mappedPaths);
+    setCurrentScreen('master');
+
+  } catch (err) {
+    console.error("Login failed:", err);
+    setSavedPaths([]);
+    setCurrentScreen('master');
+  }
+};
+
+  const handleLogout = async () => {
+    const sessionId = localStorage.getItem("session_id");
+
+    if (sessionId) {
+      await fetch(`${API_BASE}/session/end`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: Number(sessionId)
+        })
+      });
+    }
+
+    localStorage.removeItem("session_id");
+    localStorage.removeItem("username");
+
     setUserEmail('');
     setSavedPaths([]);
     setCurrentPathId(null);
@@ -111,6 +192,7 @@ export default function App() {
       responses: [],
       timeCommitment: 0
     });
+
     setCurrentScreen('login');
   };
 

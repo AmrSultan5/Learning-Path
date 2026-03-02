@@ -59,3 +59,27 @@ class LearningProgress(Base):
     progress_json = Column(JSON, nullable=False)
     overall_progress = Column(Integer, default=0)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class UserSession(Base):
+    __tablename__ = "user_sessions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, ForeignKey("users.username"), nullable=False)
+
+    login_time = Column(DateTime, default=datetime.utcnow)
+    logout_time = Column(DateTime, nullable=True)
+
+
+class ScreenActivity(Base):
+    __tablename__ = "screen_activity"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    username = Column(String, ForeignKey("users.username"), nullable=False)
+    session_id = Column(Integer, ForeignKey("user_sessions.id"), nullable=False)
+
+    screen_name = Column(String, nullable=False)
+
+    enter_time = Column(DateTime, nullable=False)
+    exit_time = Column(DateTime, nullable=False)
+    duration_seconds = Column(Integer, nullable=False)
