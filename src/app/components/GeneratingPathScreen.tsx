@@ -6,11 +6,11 @@ export function GeneratingPathScreen() {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl overflow-hidden">
-        
+
         {/* Header */}
         <div className="bg-[#F40009] text-white p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={hellenLogo} alt="MAILA" className="h-8" />
+            <img src={hellenLogo} alt="MAILA" className="h-7" />
             <div>
               <h2 className="text-lg">Learning Assistant</h2>
               <p className="text-xs text-white/80">

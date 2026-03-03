@@ -80,7 +80,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
   const [isTyping, setIsTyping] = useState(false);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [waitingForFollowUp, setWaitingForFollowUp] = useState(false);
-  
+
   // Profile state
   const [selectedJobFunction, setSelectedJobFunction] = useState<JobFunction | null>(null);
   const [selectedExperience, setSelectedExperience] = useState<ExperienceLevel | null>(null);
@@ -89,10 +89,10 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
   const [selectedTime, setSelectedTime] = useState<number | null>(null);
   const [userResponses, setUserResponses] = useState<string[]>([]);
   const [pathId, setPathId] = useState<number | null>(null);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  
+
   // Sound effects
   const { playTyping, playClick } = useSound();
 
@@ -173,10 +173,10 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
     setIsTyping(true);
     setShowCustomInput(false);
     setWaitingForFollowUp(false);
-    
+
     setTimeout(() => {
       setIsTyping(false);
-      
+
       if (currentQuestion < questions.length - 1) {
         const nextQuestion = currentQuestion + 1;
         const botMessage: Message = {
@@ -205,7 +205,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
 
   const showFollowUpQuestion = () => {
     setIsTyping(true);
-    
+
     setTimeout(() => {
       setIsTyping(false);
       const followUpMessage: Message = {
@@ -226,7 +226,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
 
   const handleFollowUpSubmit = async () => {
     if (!currentInput.trim()) return;
-    
+
     await addUserMessage(currentInput);
 
     let selectedValue: any = undefined;
@@ -255,11 +255,11 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
       setShowCustomInput(false);
       setWaitingForFollowUp(false);
       setCurrentInput('');
-      
+
       setTimeout(() => {
         setIsTyping(false);
         const prevQuestion = currentQuestion - 1;
-        
+
         // Add bot message for previous question
         const botMessage: Message = {
           text: questions[prevQuestion],
@@ -268,7 +268,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
         };
         setMessages(prev => [...prev, botMessage]);
         setCurrentQuestion(prevQuestion);
-        
+
         // Clear selections for current question
         if (currentQuestion === 1) {
           setSelectedJobFunction(null);
@@ -503,15 +503,13 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                 <button
                   key={area.value}
                   onClick={() => handleInterestToggle(area.value)}
-                  className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left ${
-                    isSelected
+                  className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left ${isSelected
                       ? 'border-[#F40009] bg-red-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
+                    }`}>
                     <Icon className="w-3.5 h-3.5" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -551,15 +549,13 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                 <button
                   key={goal.value}
                   onClick={() => handleGoalToggle(goal.value)}
-                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border-2 transition-all text-center ${
-                    isSelected
+                  className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border-2 transition-all text-center ${isSelected
                       ? 'border-[#F40009] bg-red-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
-                  }`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
+                    }`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <span className={`text-[10px] leading-tight ${isSelected ? 'text-[#F40009] font-medium' : 'text-gray-700'}`}>
@@ -610,7 +606,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
         {/* Header */}
         <div className="bg-[#F40009] text-white p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-            <img src={hellenLogo} alt="MAILA" className="h-8" />
+            <img src={hellenLogo} alt="MAILA" className="h-7" />
             <div>
               <h2 className="text-lg">Learning Assistant</h2>
               <p className="text-xs text-white/80">Here to help you find your path</p>
@@ -627,9 +623,8 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
               className={`flex gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  message.sender === 'bot' ? 'bg-[#F40009]' : 'bg-gray-300'
-                }`}
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.sender === 'bot' ? 'bg-[#F40009]' : 'bg-gray-300'
+                  }`}
               >
                 {message.sender === 'bot' ? (
                   <Bot className="w-4 h-4 text-white" />
@@ -638,11 +633,10 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                 )}
               </div>
               <div
-                className={`max-w-[70%] rounded-2xl px-4 py-2 ${
-                  message.sender === 'bot'
+                className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.sender === 'bot'
                     ? 'bg-gray-100 text-gray-800'
                     : 'bg-[#F40009] text-white'
-                }`}
+                  }`}
               >
                 <p className="text-sm leading-relaxed">{message.text}</p>
               </div>

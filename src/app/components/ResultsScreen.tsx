@@ -95,8 +95,8 @@ function ModuleStarRating({ rating }: { rating: number | null }) {
         <Star
           key={i}
           className={`w-3 h-3 ${i < Math.round(rating)
-              ? 'fill-yellow-400 text-yellow-400'
-              : 'text-gray-300'
+            ? 'fill-yellow-400 text-yellow-400'
+            : 'text-gray-300'
             }`}
         />
       ))}
@@ -265,7 +265,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
         <div className="bg-[#F40009] text-white rounded-3xl p-8 mb-8 shadow-xl">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-4">
-              <img src={hellenLogo} alt="MAILA" className="h-12" />
+              <img src={hellenLogo} alt="MAILA" className="h-10" />
               <div className="flex-1">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-10 h-10" />

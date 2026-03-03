@@ -9,7 +9,7 @@ interface WelcomeScreenProps {
 
 export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
   const { playClick } = useSound();
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F40009] to-[#DC0012] flex items-center justify-center p-4">
       <div className="max-w-3xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
@@ -18,12 +18,12 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           <div className="flex justify-center mb-6">
             <img src={cocaColaHBCLogo} alt="Coca-Cola HBC" className="h-12 md:h-14" />
           </div>
-          
+
           {/* Logo Area */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-4">
               <div className="bg-white rounded-2xl p-4 shadow-md">
-                <img src={hellenLogo} alt="Hellen+ for AI Academy" className="h-24 md:h-32" />
+                <img src={hellenLogo} alt="Hellen+ for AI Academy" className="h-12 md:h-14" />
               </div>
             </div>
             <h2 className="text-2xl md:text-3xl text-gray-800">
@@ -34,7 +34,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           {/* Description */}
           <div className="bg-gray-50 rounded-2xl p-6 mb-8">
             <p className="text-gray-700 text-center text-lg leading-relaxed">
-              Chat with our learning assistant to discover your personalized journey in Data, Analytics & AI. 
+              Chat with our learning assistant to discover your personalized journey in Data, Analytics & AI.
               We'll ask you a few questions to find the perfect path based on your role, experience, and interests.
             </p>
           </div>
