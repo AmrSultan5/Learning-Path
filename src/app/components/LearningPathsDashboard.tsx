@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star } from 'lucide-react';
+import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star, MessageSquare, Send } from 'lucide-react';
 import { useSound } from '@/utils/sounds';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import type { UserProfile } from '@/app/App';
@@ -20,43 +20,51 @@ interface LearningPathsDashboardProps {
   onLogout: () => void;
 }
 
-function StarRating({ rating }: { rating: number | null }) {
-  if (rating == null) return null;
+interface UserRatingData {
+  rating: number;
+  comment: string;
+}
 
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.25 && rating - fullStars < 0.75;
-  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+function InteractiveStarRating({
+  currentRating,
+  onRate
+}: {
+  currentRating: number;
+  onRate: (rating: number) => void;
+}) {
+  const [hoverRating, setHoverRating] = useState(0);
 
   return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center">
-        {Array.from({ length: fullStars }).map((_, i) => (
-          <Star
-            key={`full-${i}`}
-            className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400"
-          />
-        ))}
-
-        {hasHalf && (
-          <div className="relative w-3.5 h-3.5">
-            <Star className="absolute w-3.5 h-3.5 text-yellow-400" />
-            <div className="absolute overflow-hidden w-[50%]">
-              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-            </div>
-          </div>
-        )}
-
-        {Array.from({ length: emptyStars }).map((_, i) => (
-          <Star
-            key={`empty-${i}`}
-            className="w-3.5 h-3.5 text-gray-300"
-          />
-        ))}
-      </div>
-
-      <span className="text-xs font-medium text-gray-600">
-        {rating.toFixed(1)}
-      </span>
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const starValue = i + 1;
+        const isFilled = starValue <= (hoverRating || currentRating);
+        return (
+          <button
+            key={i}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRate(starValue);
+            }}
+            onMouseEnter={() => setHoverRating(starValue)}
+            onMouseLeave={() => setHoverRating(0)}
+            className="p-0.5 transition-transform hover:scale-125"
+          >
+            <Star
+              className={`w-4 h-4 transition-colors ${isFilled
+                ? 'fill-yellow-400 text-yellow-400'
+                : 'text-gray-300 hover:text-yellow-300'
+                }`}
+            />
+          </button>
+        );
+      })}
+      {currentRating > 0 && (
+        <span className="text-xs font-medium text-gray-600 ml-1">
+          {currentRating.toFixed(1)}
+        </span>
+      )}
     </div>
   );
 }
@@ -72,7 +80,10 @@ export function LearningPathsDashboard({
   const { playClick, playTyping } = useSound();
 
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
-  const [ratingsMap, setRatingsMap] = useState<Record<string, number>>({});
+  const [userRatingsMap, setUserRatingsMap] = useState<Record<string, UserRatingData>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [showCommentFor, setShowCommentFor] = useState<string | null>(null);
+  const [savingRating, setSavingRating] = useState<string | null>(null);
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
@@ -108,24 +119,71 @@ export function LearningPathsDashboard({
 
   }, [savedPaths, userEmail]);
 
-  // Fetch ratings for all saved paths
+  // Fetch user-submitted ratings
   useEffect(() => {
-    async function loadRatings() {
+    async function loadUserRatings() {
       try {
         const res = await fetch(
-          `${API_BASE}/ratings/user/${encodeURIComponent(userEmail)}`
+          `${API_BASE}/user-ratings/${encodeURIComponent(userEmail)}`
         );
         const data = await res.json();
-        setRatingsMap(data);
+        setUserRatingsMap(data);
+
+        // Pre-fill comment inputs
+        const inputs: Record<string, string> = {};
+        for (const [id, ratingData] of Object.entries(data)) {
+          inputs[id] = (ratingData as UserRatingData).comment || '';
+        }
+        setCommentInputs(inputs);
       } catch {
-        setRatingsMap({});
+        setUserRatingsMap({});
       }
     }
 
     if (userEmail) {
-      loadRatings();
+      loadUserRatings();
     }
   }, [userEmail, savedPaths]);
+
+  const saveRating = async (pathId: string, rating: number, comment?: string) => {
+    setSavingRating(pathId);
+    try {
+      await fetch(`${API_BASE}/user-rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: userEmail,
+          learning_path_id: parseInt(pathId),
+          rating,
+          comment: comment ?? commentInputs[pathId] ?? ''
+        })
+      });
+
+      setUserRatingsMap(prev => ({
+        ...prev,
+        [pathId]: {
+          rating,
+          comment: comment ?? commentInputs[pathId] ?? ''
+        }
+      }));
+    } catch (err) {
+      console.error('Failed to save rating:', err);
+    }
+    setSavingRating(null);
+  };
+
+  const handleStarClick = (pathId: string, rating: number) => {
+    playClick();
+    saveRating(pathId, rating);
+  };
+
+  const handleCommentSave = (pathId: string) => {
+    playClick();
+    const currentRating = userRatingsMap[pathId]?.rating || 0;
+    if (currentRating === 0) return;
+    saveRating(pathId, currentRating, commentInputs[pathId] || '');
+    setShowCommentFor(null);
+  };
 
   const handleCreateNew = () => {
     playClick();
@@ -225,9 +283,8 @@ export function LearningPathsDashboard({
 
           {/* Saved Learning Paths */}
           {savedPaths.map((path) => (
-            <button
+            <div
               key={path.id}
-              onClick={() => handleSelectPath(path)}
               onMouseEnter={() => {
                 playTyping();
                 setHoveredCard(path.id);
@@ -236,81 +293,146 @@ export function LearningPathsDashboard({
               className={`bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-[#F40009] hover:shadow-lg transition-all duration-200 min-h-[220px] flex flex-col text-left ${hoveredCard === path.id ? 'scale-105' : ''
                 }`}
             >
-              {/* Path Icon */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="text-4xl">{getPathIcon(path.profile)}</div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${progressMap[path.id] === 100
+              {/* Clickable Area for Navigation */}
+              <button
+                onClick={() => handleSelectPath(path)}
+                className="flex-1 text-left w-full"
+              >
+                {/* Path Icon */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="text-4xl">{getPathIcon(path.profile)}</div>
+                  <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${progressMap[path.id] === 100
                     ? "bg-green-100 text-green-700"
                     : "bg-blue-100 text-blue-700"
-                  }`}>
-                  <TrendingUp className="w-3 h-3" />
-                  {progressMap[path.id] === undefined
-                    ? "Loading..."
-                    : progressMap[path.id] === 100
-                      ? "Completed"
-                      : `${Math.round(progressMap[path.id])}%`}
-                </div>
-              </div>
-
-              {/* Path Details */}
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                  {path.name}
-                </h3>
-
-                {path.recommendedPath && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <BookOpen className="w-4 h-4 text-[#F40009]" />
-                    <span className="text-sm text-gray-700">
-                      {path.recommendedPath}
-                    </span>
+                    }`}>
+                    <TrendingUp className="w-3 h-3" />
+                    {progressMap[path.id] === undefined
+                      ? "Loading..."
+                      : progressMap[path.id] === 100
+                        ? "Completed"
+                        : `${Math.round(progressMap[path.id])}%`}
                   </div>
+                </div>
+
+                {/* Path Details */}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    {path.name}
+                  </h3>
+
+                  {path.recommendedPath && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-[#F40009]" />
+                      <span className="text-sm text-gray-700">
+                        {path.recommendedPath}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Calendar className="w-4 h-4" />
+                    <span>Created {formatDate(path.createdAt)}</span>
+                  </div>
+
+                  {/* Profile Summary */}
+                  <div className="mt-3 flex flex-wrap gap-1">
+                    {path.profile.experienceLevel && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium capitalize">
+                        {path.profile.experienceLevel}
+                      </span>
+                    )}
+                    {path.profile.jobFunction && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium capitalize">
+                        {path.profile.jobFunction.replace('-', ' ')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Bar */}
+                <div className="mt-3">
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-500"
+                      style={{ width: `${progressMap[path.id] ?? 0}%` }}
+                    />
+                  </div>
+                </div>
+              </button>
+
+              {/* User Rating & Comment Section */}
+              <div
+                className="mt-4 pt-4 border-t border-gray-100"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    Your Rating
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      playClick();
+                      setShowCommentFor(
+                        showCommentFor === path.id ? null : path.id
+                      );
+                    }}
+                    className="flex items-center gap-1 text-xs text-gray-500 hover:text-[#F40009] transition-colors"
+                  >
+                    <MessageSquare className="w-3 h-3" />
+                    {userRatingsMap[path.id]?.comment ? 'Edit comment' : 'Add comment'}
+                  </button>
+                </div>
+
+                <InteractiveStarRating
+                  currentRating={userRatingsMap[path.id]?.rating || 0}
+                  onRate={(rating) => handleStarClick(path.id, rating)}
+                />
+
+                {savingRating === path.id && (
+                  <p className="text-xs text-green-600 mt-1">Saving...</p>
                 )}
 
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Calendar className="w-4 h-4" />
-                  <span>Created {formatDate(path.createdAt)}</span>
-                </div>
+                {/* Existing comment display */}
+                {userRatingsMap[path.id]?.comment && showCommentFor !== path.id && (
+                  <p className="text-xs text-gray-500 mt-2 italic line-clamp-2">
+                    "{userRatingsMap[path.id].comment}"
+                  </p>
+                )}
 
-                {/* Profile Summary */}
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {path.profile.experienceLevel && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium capitalize">
-                      {path.profile.experienceLevel}
-                    </span>
-                  )}
-                  {path.profile.jobFunction && (
-                    <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-md text-xs font-medium capitalize">
-                      {path.profile.jobFunction.replace('-', ' ')}
-                    </span>
-                  )}
-                </div>
+                {/* Comment Input */}
+                {showCommentFor === path.id && (
+                  <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                    <textarea
+                      value={commentInputs[path.id] || ''}
+                      onChange={(e) => {
+                        setCommentInputs(prev => ({
+                          ...prev,
+                          [path.id]: e.target.value
+                        }));
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Share your thoughts about this learning path..."
+                      className="w-full text-sm border border-gray-200 rounded-lg p-2 resize-none focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009] transition-all"
+                      rows={3}
+                    />
+                    <div className="flex justify-end mt-1.5">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCommentSave(path.id);
+                        }}
+                        disabled={!userRatingsMap[path.id]?.rating}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F40009] text-white text-xs font-medium rounded-lg hover:bg-[#DC0012] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Send className="w-3 h-3" />
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* Star Rating */}
-              {ratingsMap[path.id] !== undefined && (
-                <div className="mt-2">
-                  <StarRating rating={ratingsMap[path.id]} />
-                </div>
-              )}
-
-              {/* Progress Bar */}
-              <div className="mt-3">
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-500"
-                    style={{ width: `${progressMap[path.id] ?? 0}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Continue Button */}
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="text-[#F40009] font-medium text-sm">
-                  Continue Learning →
-                </div>
-              </div>
-            </button>
+            </div>
           ))}
         </div>
 

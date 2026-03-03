@@ -126,6 +126,12 @@ class ActivityLogRequest(BaseModel):
     exit_time: datetime
     duration_seconds: int
 
+class UserRatingRequest(BaseModel):
+    username: str
+    learning_path_id: int
+    rating: float  # 1.0 - 5.0
+    comment: Optional[str] = None
+
 # ----------------------------
 # Helper Functions
 # ----------------------------
@@ -704,7 +710,7 @@ def get_learning_path_ratings(path_id: int, db: Session = Depends(get_db)):
 
 @app.get("/ratings/user/{username}")
 def get_user_ratings(username: str, db: Session = Depends(get_db)):
-    """Get average ratings for all of a user's learning paths (for dashboard)."""
+    """Get CSV-based average ratings for all of a user's learning paths."""
     paths = db.query(models.LearningPath).filter(
         models.LearningPath.username == username,
         models.LearningPath.status == "completed"
@@ -716,5 +722,46 @@ def get_user_ratings(username: str, db: Session = Depends(get_db)):
         if part_ratings:
             all_ratings = list(part_ratings.values())
             result[str(lp.id)] = round(sum(all_ratings) / len(all_ratings), 1)
+
+    return result
+
+
+@app.post("/user-rating")
+def save_user_rating(data: UserRatingRequest, db: Session = Depends(get_db)):
+    """Save or update a user's rating and comment for a learning path."""
+    existing = db.query(models.UserRating).filter(
+        models.UserRating.username == data.username,
+        models.UserRating.learning_path_id == data.learning_path_id
+    ).first()
+
+    if existing:
+        existing.rating = data.rating
+        existing.comment = data.comment
+    else:
+        new_rating = models.UserRating(
+            username=data.username,
+            learning_path_id=data.learning_path_id,
+            rating=data.rating,
+            comment=data.comment
+        )
+        db.add(new_rating)
+
+    db.commit()
+    return {"message": "Rating saved"}
+
+
+@app.get("/user-ratings/{username}")
+def get_all_user_ratings(username: str, db: Session = Depends(get_db)):
+    """Get all user-submitted ratings and comments for a user's learning paths."""
+    ratings = db.query(models.UserRating).filter(
+        models.UserRating.username == username
+    ).all()
+
+    result = {}
+    for r in ratings:
+        result[str(r.learning_path_id)] = {
+            "rating": r.rating,
+            "comment": r.comment or ""
+        }
 
     return result

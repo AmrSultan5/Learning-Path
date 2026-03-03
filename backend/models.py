@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, JSON
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text, JSON, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base
@@ -83,3 +83,15 @@ class ScreenActivity(Base):
     enter_time = Column(DateTime, nullable=False)
     exit_time = Column(DateTime, nullable=False)
     duration_seconds = Column(Integer, nullable=False)
+
+
+class UserRating(Base):
+    __tablename__ = "user_ratings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, ForeignKey("users.username"), nullable=False)
+    learning_path_id = Column(Integer, ForeignKey("learning_paths.id"), nullable=False)
+    rating = Column(Float, nullable=False)  # 1.0 - 5.0
+    comment = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
