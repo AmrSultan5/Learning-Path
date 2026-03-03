@@ -9,7 +9,7 @@ import { GeneratingPathScreen } from '@/app/components/GeneratingPathScreen';
 
 export type JobFunction = 'commercial' | 'supply-chain' | 'marketing' | 'finance' | 'operations' | 'hr' | 'other';
 export type ExperienceLevel = 'beginner' | 'intermediate' | 'advanced';
-export type InterestArea = 'visualization' | 'statistics' | 'ml-ai' | 'data-engineering' | 'business-intelligence';
+export type InterestArea = 'visualization' | 'statistics' | 'ml' | 'data-engineering' | 'generative-agentic-ai';
 import { useEffect } from 'react';
 
 export interface UserProfile {
@@ -349,7 +349,7 @@ export default function App() {
   const generatePathName = (profile: UserProfile): string => {
     const level = profile.experienceLevel || 'beginner';
     const jobFunc = profile.jobFunction || 'general';
-    const interest = profile.interests[0] || 'data-analytics';
+    const interest = profile.interests[0] || 'visualization';
 
     const jobLabels: Record<string, string> = {
       'commercial': 'Commercial',
@@ -364,9 +364,9 @@ export default function App() {
     const interestLabels: Record<string, string> = {
       'visualization': 'Data Visualization',
       'statistics': 'Statistics',
-      'ml-ai': 'ML & AI',
+      'ml': 'Machine Learning',
       'data-engineering': 'Data Engineering',
-      'business-intelligence': 'Business Intelligence'
+      'generative-agentic-ai': 'Generative & Agentic AI'
     };
 
     return `${jobLabels[jobFunc]} - ${interestLabels[interest]} (${level})`;
@@ -374,24 +374,30 @@ export default function App() {
 
   // Determine recommended path based on profile
   const determineRecommendedPath = (profile: UserProfile): string => {
-    if (profile.experienceLevel === 'beginner') {
-      return 'Data Fundamentals';
-    }
+  if (profile.experienceLevel === 'beginner') {
+    return 'Data Fundamentals';
+  }
 
-    if (profile.interests.includes('ml-ai')) {
-      return profile.experienceLevel === 'advanced' ? 'Generative AI' : 'Machine Learning';
-    }
+  if (profile.interests.includes('generative-agentic-ai')) {
+    return 'Generative & Agentic AI';
+  }
 
-    if (profile.interests.includes('visualization')) {
-      return 'Data Visualization';
-    }
+  if (profile.interests.includes('ml')) {
+    return profile.experienceLevel === 'advanced'
+      ? 'Advanced Machine Learning'
+      : 'Machine Learning';
+  }
 
-    if (profile.interests.includes('statistics')) {
-      return 'Data Science Basics';
-    }
+  if (profile.interests.includes('visualization')) {
+    return 'Data Visualization';
+  }
 
-    return 'Data Projects';
-  };
+  if (profile.interests.includes('statistics')) {
+    return 'Data Science Basics';
+  }
+
+  return 'Data Projects';
+};
 
   return (
     <div className="min-h-screen bg-gray-50">

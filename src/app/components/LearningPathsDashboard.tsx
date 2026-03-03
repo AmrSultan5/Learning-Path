@@ -242,7 +242,7 @@ export function LearningPathsDashboard({
 
   const getPathIcon = (profile: UserProfile) => {
     if (profile.interests.includes('visualization')) return '📊';
-    if (profile.interests.includes('ml-ai')) return '🤖';
+    if (profile.interests.includes('ml')) return '🤖';
     if (profile.interests.includes('statistics')) return '📈';
     if (profile.interests.includes('data-engineering')) return '⚙️';
     return '📚';

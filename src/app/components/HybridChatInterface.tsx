@@ -6,7 +6,7 @@ import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/
 import { useSound } from '@/utils/sounds';
 import { Briefcase, Package, Megaphone, DollarSign, Settings, Users as UsersIcon } from 'lucide-react';
 import { Sprout, TrendingUp, Award } from 'lucide-react';
-import { BarChart3, Calculator, Brain, Database, PieChart } from 'lucide-react';
+import { BarChart3, Calculator, Brain, Database, PieChart, Sparkles } from 'lucide-react';
 import { Target, Lightbulb, Users as UsersGoalIcon, Rocket, Clock } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL;
@@ -44,9 +44,9 @@ const experienceLevels: { value: ExperienceLevel; label: string; description: st
 const interestAreas: { value: InterestArea; label: string; description: string; icon: React.ComponentType<any> }[] = [
   { value: 'visualization', label: 'Data Visualization', description: 'Creating dashboards and visual reports', icon: PieChart },
   { value: 'statistics', label: 'Statistics & Analysis', description: 'Statistical methods and data analysis', icon: Calculator },
-  { value: 'ml-ai', label: 'Machine Learning & AI', description: 'Predictive models and AI applications', icon: Brain },
+  { value: 'ml', label: 'Machine Learning', description: 'Predictive models and AI applications', icon: Brain },
   { value: 'data-engineering', label: 'Data Engineering', description: 'Building data pipelines and infrastructure', icon: Database },
-  { value: 'business-intelligence', label: 'Business Intelligence', description: 'Strategic insights and decision support', icon: BarChart3 },
+  { value: 'generative-agentic-ai', label: 'Generative & Agentic AI', description: 'Strategic insights and decision support', icon: Sparkles },
 ];
 
 const goalOptions: { value: string; label: string; icon: React.ComponentType<any> }[] = [
@@ -392,18 +392,18 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
         detectedInterests.push('statistics');
       }
       if (interestResponse.includes('machine learning') || interestResponse.includes('ml') || interestResponse.includes('ai')) {
-        detectedInterests.push('ml-ai');
+        detectedInterests.push('ml');
       }
       if (interestResponse.includes('engineer') || interestResponse.includes('pipeline')) {
         detectedInterests.push('data-engineering');
       }
-      if (interestResponse.includes('business intelligence') || interestResponse.includes('bi')) {
-        detectedInterests.push('business-intelligence');
+      if (interestResponse.includes('generative') || interestResponse.includes('agentic') || interestResponse.includes('gen ai')) {
+        detectedInterests.push('generative-agentic-ai');
       }
       if (detectedInterests.length > 0) {
         setSelectedInterests(detectedInterests);
       } else {
-        setSelectedInterests(['business-intelligence']); // default
+        setSelectedInterests(['generative-agentic-ai']); // default
       }
     } else if (currentQuestion === 3) {
       const goalsResponse = currentInput.toLowerCase();

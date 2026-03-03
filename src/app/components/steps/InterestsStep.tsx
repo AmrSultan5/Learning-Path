@@ -1,4 +1,4 @@
-import { BarChart3, Calculator, Brain, Database, PieChart } from 'lucide-react';
+import { BarChart3, Calculator, Brain, Database, PieChart, Sparkles } from 'lucide-react';
 import type { InterestArea } from '@/app/App';
 
 interface InterestsStepProps {
@@ -20,7 +20,7 @@ const interestAreas: { value: InterestArea; label: string; description: string; 
     icon: Calculator,
   },
   {
-    value: 'ml-ai',
+    value: 'ml',
     label: 'Machine Learning & AI',
     description: 'Predictive models and AI applications',
     icon: Brain,
@@ -32,10 +32,10 @@ const interestAreas: { value: InterestArea; label: string; description: string; 
     icon: Database,
   },
   {
-    value: 'business-intelligence',
-    label: 'Business Intelligence',
+    value: 'generative-agentic-ai',
+    label: 'Generative & Agentic AI',
     description: 'Strategic insights and decision support',
-    icon: BarChart3,
+    icon: Sparkles,
   },
 ];
 
@@ -62,16 +62,14 @@ export function InterestsStep({ selectedInterests, onSelect }: InterestsStepProp
             <button
               key={area.value}
               onClick={() => toggleInterest(area.value)}
-              className={`w-full flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left ${
-                isSelected
+              className={`w-full flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left ${isSelected
                   ? 'border-[#F40009] bg-red-50 shadow-md'
                   : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
-              }`}
+                }`}
             >
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                  isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
-                }`}
+                className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
+                  }`}
               >
                 <Icon className="w-6 h-6" />
               </div>
