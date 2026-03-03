@@ -326,10 +326,9 @@ export function LearningPathsDashboard({
                 }`}
             >
               {/* Clickable Area for Navigation */}
-              <button
-                type="button"
+              <div
                 onClick={() => handleSelectPath(path)}
-                className="flex-1 text-left w-full focus:outline-none focus:ring-2 focus:ring-[#F40009]/40 rounded-xl"
+                className="flex-1 text-left w-full cursor-pointer"
               >
                 {/* Path Icon */}
                 <div className="flex items-start justify-between mb-4">
@@ -449,7 +448,7 @@ export function LearningPathsDashboard({
                     />
                   </div>
                 </div>
-              </button>
+              </div>
 
               {/* User Rating & Comment Section */}
               <div
