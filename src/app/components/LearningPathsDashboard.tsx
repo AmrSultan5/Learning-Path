@@ -20,6 +20,47 @@ interface LearningPathsDashboardProps {
   onLogout: () => void;
 }
 
+function StarRating({ rating }: { rating: number | null }) {
+  if (rating == null) return null;
+
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.25 && rating - fullStars < 0.75;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <Star
+            key={`full-${i}`}
+            className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400"
+          />
+        ))}
+
+        {hasHalf && (
+          <div className="relative w-3.5 h-3.5">
+            <Star className="absolute w-3.5 h-3.5 text-yellow-400" />
+            <div className="absolute overflow-hidden w-[50%]">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+            </div>
+          </div>
+        )}
+
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <Star
+            key={`empty-${i}`}
+            className="w-3.5 h-3.5 text-gray-300"
+          />
+        ))}
+      </div>
+
+      <span className="text-xs font-medium text-gray-600">
+        {rating.toFixed(1)}
+      </span>
+    </div>
+  );
+}
+
 export function LearningPathsDashboard({
   userEmail,
   savedPaths,
@@ -248,21 +289,8 @@ export function LearningPathsDashboard({
 
               {/* Star Rating */}
               {ratingsMap[path.id] !== undefined && (
-                <div className="mt-2 flex items-center gap-1.5">
-                  <div className="flex items-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-3.5 h-3.5 ${i < Math.round(ratingsMap[path.id])
-                            ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300'
-                          }`}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs font-medium text-gray-600">
-                    {ratingsMap[path.id].toFixed(1)}
-                  </span>
+                <div className="mt-2">
+                  <StarRating rating={ratingsMap[path.id]} />
                 </div>
               )}
 

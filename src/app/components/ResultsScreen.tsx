@@ -5,6 +5,7 @@ import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/
 import { useState, useEffect, useMemo } from 'react';
 import { PathChatModal } from '@/app/components/PathChatModal';
 import { useSound } from '@/utils/sounds';
+import { ExternalLink } from 'lucide-react';
 
 interface ResultsScreenProps {
   profile: UserProfile;
@@ -89,7 +90,7 @@ function computeModuleRating(module: AISummary['selected_paths'][0]['modules'][0
 function ModuleStarRating({ rating }: { rating: number | null }) {
   if (rating === null || rating === undefined) return null;
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 group">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
@@ -516,17 +517,23 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
                                       )}
                                     </button>
 
-                                    <a
-                                      href={path.link}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className={`text-sm transition-all duration-300 ${completed[`${index}-${moduleIndex}-${subIndex}`]
-                                        ? "line-through text-gray-400"
-                                        : "text-gray-700 hover:text-[#F40009]"
-                                        }`}
-                                    >
-                                      {sub.name}
-                                    </a>
+                                    <div className="flex items-center gap-1">
+                                      <a
+                                        href={path.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className={`text-sm font-medium underline underline-offset-2 transition-all duration-300 ${completed[`${index}-${moduleIndex}-${subIndex}`]
+                                          ? "line-through text-gray-400"
+                                          : "text-blue-600 hover:text-[#F40009]"
+                                          }`}
+                                      >
+                                        {sub.name}
+                                      </a>
+
+                                      {!completed[`${index}-${moduleIndex}-${subIndex}`] && (
+                                        <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover:text-[#F40009]" />
+                                      )}
+                                    </div>
                                   </div>
 
                                   <span className="text-xs text-gray-500">
