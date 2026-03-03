@@ -326,9 +326,17 @@ export function LearningPathsDashboard({
                 }`}
             >
               {/* Clickable Area for Navigation */}
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => handleSelectPath(path)}
-                className="flex-1 text-left w-full"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSelectPath(path);
+                  }
+                }}
+                className="flex-1 text-left w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F40009]/40 rounded-xl"
               >
                 {/* Path Icon */}
                 <div className="flex items-start justify-between mb-4">
@@ -357,20 +365,8 @@ export function LearningPathsDashboard({
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => {
                           e.stopPropagation();
-
-                          if (e.key === ' ') {
-                            e.preventDefault();
-                          }
-
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleSaveRename(path.id);
-                          }
-
-                          if (e.key === 'Escape') {
-                            e.preventDefault();
-                            setEditingNameFor(null);
-                          }
+                          if (e.key === 'Enter') handleSaveRename(path.id);
+                          if (e.key === 'Escape') setEditingNameFor(null);
                         }}
                         className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009]"
                         autoFocus
@@ -440,7 +436,7 @@ export function LearningPathsDashboard({
                     />
                   </div>
                 </div>
-              </button>
+              </div>
 
               {/* User Rating & Comment Section */}
               <div
