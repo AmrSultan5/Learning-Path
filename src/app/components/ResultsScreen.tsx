@@ -12,6 +12,7 @@ interface ResultsScreenProps {
   username: string;
   learningPathId: number;
   aiSummary: AISummary;
+  isNewPath?: boolean;
   onRestart: () => void;
   onGoToDashboard: () => void;
 }
@@ -105,7 +106,7 @@ function ModuleStarRating({ rating }: { rating: number | null }) {
   );
 }
 
-export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart, onGoToDashboard }: ResultsScreenProps) {
+export function ResultsScreen({ profile, username, learningPathId, aiSummary, isNewPath, onRestart, onGoToDashboard }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
 
@@ -590,11 +591,15 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
           <button
             onClick={() => {
               playClick();
-              setShowNamingModal(true);
+              if (isNewPath) {
+                setShowNamingModal(true);
+              } else {
+                onGoToDashboard();
+              }
             }}
             className="px-8 py-3 rounded-full bg-[#F40009] text-white hover:bg-[#DC0012] transition-all shadow-md"
           >
-            Save This Learning Journey
+            {isNewPath ? 'Save This Learning Journey' : 'Go to Dashboard'}
           </button>
         </div>
 

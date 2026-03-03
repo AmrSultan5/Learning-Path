@@ -356,6 +356,7 @@ export function LearningPathsDashboard({
                         onChange={(e) => setEditNameInput(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => {
+                          e.stopPropagation();
                           if (e.key === 'Enter') handleSaveRename(path.id);
                           if (e.key === 'Escape') setEditingNameFor(null);
                         }}

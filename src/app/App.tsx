@@ -22,7 +22,7 @@ export interface UserProfile {
 }
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState< 'master' | 'welcome' | 'login' | 'dashboard' | 'chat' | 'generating' | 'results'>('login');
+  const [currentScreen, setCurrentScreen] = useState<'master' | 'welcome' | 'login' | 'dashboard' | 'chat' | 'generating' | 'results'>('login');
   const [userEmail, setUserEmail] = useState<string>('');
   const [savedPaths, setSavedPaths] = useState<SavedLearningPath[]>([]);
   const [currentPathId, setCurrentPathId] = useState<string | null>(null);
@@ -37,6 +37,7 @@ export default function App() {
   });
   const [aiSummary, setAiSummary] = useState<any | null>(null);
   const [learningPathId, setLearningPathId] = useState<number | null>(null);
+  const [isNewPath, setIsNewPath] = useState(false);
 
   const handleSelectLearningPath = () => {
     setSelectedMode('learning-path');
@@ -57,119 +58,119 @@ export default function App() {
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-  const handleUnload = () => {
+    const handleUnload = () => {
+      const sessionId = localStorage.getItem("session_id");
+
+      if (sessionId) {
+        navigator.sendBeacon(
+          `${API_BASE}/session/end`,
+          JSON.stringify({ session_id: Number(sessionId) })
+        );
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [API_BASE]);
+
+  useEffect(() => {
+    if (!userEmail) return;
+
     const sessionId = localStorage.getItem("session_id");
+    if (!sessionId) return;
 
-    if (sessionId) {
-      navigator.sendBeacon(
-        `${API_BASE}/session/end`,
-        JSON.stringify({ session_id: Number(sessionId) })
+    const enterTime = new Date();
+
+    return () => {
+      const exitTime = new Date();
+      const durationSeconds = Math.floor(
+        (exitTime.getTime() - enterTime.getTime()) / 1000
       );
-    }
-  };
 
-  window.addEventListener("beforeunload", handleUnload);
+      const screenIdentifier =
+        currentScreen === "results" && learningPathId
+          ? `results:${learningPathId}`
+          : currentScreen;
 
-  return () => {
-    window.removeEventListener("beforeunload", handleUnload);
-  };
-}, [API_BASE]);
+      fetch(`${API_BASE}/activity/log`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: userEmail,
+          session_id: Number(sessionId),
+          screen_name: screenIdentifier,
+          enter_time: enterTime.toISOString(),
+          exit_time: exitTime.toISOString(),
+          duration_seconds: durationSeconds
+        })
+      }).catch(err =>
+        console.error("Activity log failed:", err)
+      );
+    };
 
-useEffect(() => {
-  if (!userEmail) return;
-
-  const sessionId = localStorage.getItem("session_id");
-  if (!sessionId) return;
-
-  const enterTime = new Date();
-
-  return () => {
-    const exitTime = new Date();
-    const durationSeconds = Math.floor(
-      (exitTime.getTime() - enterTime.getTime()) / 1000
-    );
-
-    const screenIdentifier =
-      currentScreen === "results" && learningPathId
-        ? `results:${learningPathId}`
-        : currentScreen;
-
-    fetch(`${API_BASE}/activity/log`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        username: userEmail,
-        session_id: Number(sessionId),
-        screen_name: screenIdentifier,
-        enter_time: enterTime.toISOString(),
-        exit_time: exitTime.toISOString(),
-        duration_seconds: durationSeconds
-      })
-    }).catch(err =>
-      console.error("Activity log failed:", err)
-    );
-  };
-
-}, [currentScreen, learningPathId]);
+  }, [currentScreen, learningPathId]);
 
   const handleLogin = async (email: string) => {
-  setUserEmail(email);
+    setUserEmail(email);
 
-  try {
-    // 🔹 1️⃣ START SESSION FIRST
-    const sessionRes = await fetch(`${API_BASE}/session/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: email })
-    });
+    try {
+      // 🔹 1️⃣ START SESSION FIRST
+      const sessionRes = await fetch(`${API_BASE}/session/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email })
+      });
 
-    if (!sessionRes.ok) {
-      throw new Error("Failed to start session");
+      if (!sessionRes.ok) {
+        throw new Error("Failed to start session");
+      }
+
+      const sessionData = await sessionRes.json();
+
+      // Store session info
+      localStorage.setItem("username", email);
+      localStorage.setItem("session_id", sessionData.session_id);
+
+      // 🔹 2️⃣ Then fetch learning paths (your existing logic)
+      const res = await fetch(
+        `${API_BASE}/learning-paths/${email}`
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch learning paths");
+      }
+
+      const backendPaths = await res.json();
+
+      const mappedPaths: SavedLearningPath[] = backendPaths.map((path: any) => ({
+        id: path.id.toString(),
+        name: path.name,
+        createdAt: new Date(path.created_at),
+        profile: {
+          jobFunction: path.job_function,
+          experienceLevel: path.experience,
+          interests: [],
+          goals: [],
+          responses: [],
+          timeCommitment: path.time_available
+            ? parseInt(path.time_available)
+            : 0
+        },
+        recommendedPath: path.recommended_path
+      }));
+
+      setSavedPaths(mappedPaths);
+      setCurrentScreen('master');
+
+    } catch (err) {
+      console.error("Login failed:", err);
+      setSavedPaths([]);
+      setCurrentScreen('master');
     }
-
-    const sessionData = await sessionRes.json();
-
-    // Store session info
-    localStorage.setItem("username", email);
-    localStorage.setItem("session_id", sessionData.session_id);
-
-    // 🔹 2️⃣ Then fetch learning paths (your existing logic)
-    const res = await fetch(
-      `${API_BASE}/learning-paths/${email}`
-    );
-
-    if (!res.ok) {
-      throw new Error("Failed to fetch learning paths");
-    }
-
-    const backendPaths = await res.json();
-
-    const mappedPaths: SavedLearningPath[] = backendPaths.map((path: any) => ({
-      id: path.id.toString(),
-      name: path.name,
-      createdAt: new Date(path.created_at),
-      profile: {
-        jobFunction: path.job_function,
-        experienceLevel: path.experience,
-        interests: [],
-        goals: [],
-        responses: [],
-        timeCommitment: path.time_available
-          ? parseInt(path.time_available)
-          : 0
-      },
-      recommendedPath: path.recommended_path
-    }));
-
-    setSavedPaths(mappedPaths);
-    setCurrentScreen('master');
-
-  } catch (err) {
-    console.error("Login failed:", err);
-    setSavedPaths([]);
-    setCurrentScreen('master');
-  }
-};
+  };
 
   const handleLogout = async () => {
     const sessionId = localStorage.getItem("session_id");
@@ -246,7 +247,7 @@ useEffect(() => {
       });
 
       setAiSummary(fullData.ai_summary);
-
+      setIsNewPath(false);
       setCurrentScreen('results');
 
     } catch (err) {
@@ -331,6 +332,7 @@ useEffect(() => {
       setSavedPaths(mappedPaths);
 
       // 4️⃣ Go to results
+      setIsNewPath(true);
       setCurrentScreen('results');
 
     } catch (err) {
@@ -348,7 +350,7 @@ useEffect(() => {
     const level = profile.experienceLevel || 'beginner';
     const jobFunc = profile.jobFunction || 'general';
     const interest = profile.interests[0] || 'data-analytics';
-    
+
     const jobLabels: Record<string, string> = {
       'commercial': 'Commercial',
       'supply-chain': 'Supply Chain',
@@ -375,19 +377,19 @@ useEffect(() => {
     if (profile.experienceLevel === 'beginner') {
       return 'Data Fundamentals';
     }
-    
+
     if (profile.interests.includes('ml-ai')) {
       return profile.experienceLevel === 'advanced' ? 'Generative AI' : 'Machine Learning';
     }
-    
+
     if (profile.interests.includes('visualization')) {
       return 'Data Visualization';
     }
-    
+
     if (profile.interests.includes('statistics')) {
       return 'Data Science Basics';
     }
-    
+
     return 'Data Projects';
   };
 
@@ -413,8 +415,32 @@ useEffect(() => {
           username={userEmail}
           learningPathId={learningPathId}
           aiSummary={aiSummary}
+          isNewPath={isNewPath}
           onRestart={handleRestart}
-          onGoToDashboard={() => setCurrentScreen('dashboard')}
+          onGoToDashboard={async () => {
+            try {
+              const res = await fetch(`${API_BASE}/learning-paths/${userEmail}`);
+              const backendPaths = await res.json();
+              const mappedPaths: SavedLearningPath[] = backendPaths.map((path: any) => ({
+                id: path.id.toString(),
+                name: path.name,
+                createdAt: new Date(path.created_at),
+                profile: {
+                  jobFunction: path.job_function,
+                  experienceLevel: path.experience,
+                  interests: path.interests ? path.interests.split(",") : [],
+                  goals: [],
+                  responses: [],
+                  timeCommitment: path.time_available ? parseInt(path.time_available) : 0
+                },
+                recommendedPath: path.recommended_path
+              }));
+              setSavedPaths(mappedPaths);
+            } catch (err) {
+              console.error("Failed to refresh paths:", err);
+            }
+            setCurrentScreen('dashboard');
+          }}
         />
       )}
     </div>
