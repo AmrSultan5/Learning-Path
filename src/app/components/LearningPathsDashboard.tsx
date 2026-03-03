@@ -326,17 +326,10 @@ export function LearningPathsDashboard({
                 }`}
             >
               {/* Clickable Area for Navigation */}
-              <div
-                role="button"
-                tabIndex={0}
+              <button
+                type="button"
                 onClick={() => handleSelectPath(path)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleSelectPath(path);
-                  }
-                }}
-                className="flex-1 text-left w-full cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#F40009]/40 rounded-xl"
+                className="flex-1 text-left w-full focus:outline-none focus:ring-2 focus:ring-[#F40009]/40 rounded-xl"
               >
                 {/* Path Icon */}
                 <div className="flex items-start justify-between mb-4">
@@ -371,30 +364,50 @@ export function LearningPathsDashboard({
                         className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009]"
                         autoFocus
                       />
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Save new name"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSaveRename(path.id);
                         }}
-                        className="p-1 text-green-600 hover:text-green-700"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSaveRename(path.id);
+                          }
+                        }}
+                        className="p-1 text-green-600 hover:text-green-700 cursor-pointer"
                       >
                         <Check className="w-4 h-4" />
-                      </button>
+                      </span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 mb-2 group/name">
                       <h3 className="font-semibold text-gray-900 line-clamp-2">
                         {pathNames[path.id] || path.name}
                       </h3>
-                      <button
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Rename learning path"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStartEdit(path.id);
                         }}
-                        className="opacity-0 group-hover/name:opacity-100 p-1 text-gray-400 hover:text-[#F40009] transition-all"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleStartEdit(path.id);
+                          }
+                        }}
+                        className="opacity-0 group-hover/name:opacity-100 p-1 text-gray-400 hover:text-[#F40009] transition-all cursor-pointer"
                       >
                         <Pencil className="w-3 h-3" />
-                      </button>
+                      </span>
                     </div>
                   )}
 
@@ -436,7 +449,7 @@ export function LearningPathsDashboard({
                     />
                   </div>
                 </div>
-              </div>
+              </button>
 
               {/* User Rating & Comment Section */}
               <div
