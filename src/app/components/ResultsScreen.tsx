@@ -75,6 +75,35 @@ function computePartRating(path: AISummary['selected_paths'][0]): number | null 
   return Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
 }
 
+function computeModuleRating(module: AISummary['selected_paths'][0]['modules'][0]): number | null {
+  const ratings: number[] = [];
+  for (const sub of module.submodules) {
+    if (sub.rating !== null && sub.rating !== undefined) {
+      ratings.push(sub.rating);
+    }
+  }
+  if (ratings.length === 0) return null;
+  return Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
+}
+
+function ModuleStarRating({ rating }: { rating: number | null }) {
+  if (rating === null || rating === undefined) return null;
+  return (
+    <div className="flex items-center gap-1">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star
+          key={i}
+          className={`w-3 h-3 ${i < Math.round(rating)
+              ? 'fill-yellow-400 text-yellow-400'
+              : 'text-gray-300'
+            }`}
+        />
+      ))}
+      <span className="text-xs font-medium text-gray-500 ml-0.5">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
 export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart, onGoToDashboard }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
@@ -420,9 +449,12 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
 
                             {/* Module Title */}
                             <div className="flex justify-between items-center mb-2">
-                              <h4 className="text-lg font-semibold text-gray-800">
-                                {module.module_name}
-                              </h4>
+                              <div className="flex items-center gap-3">
+                                <h4 className="text-lg font-semibold text-gray-800">
+                                  {module.module_name}
+                                </h4>
+                                <ModuleStarRating rating={computeModuleRating(module)} />
+                              </div>
 
                               {/* Mark Module Complete Button */}
                               <button
@@ -489,8 +521,8 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className={`text-sm transition-all duration-300 ${completed[`${index}-${moduleIndex}-${subIndex}`]
-                                          ? "line-through text-gray-400"
-                                          : "text-gray-700 hover:text-[#F40009]"
+                                        ? "line-through text-gray-400"
+                                        : "text-gray-700 hover:text-[#F40009]"
                                         }`}
                                     >
                                       {sub.name}
