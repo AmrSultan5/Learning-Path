@@ -8,8 +8,10 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import models
 from ai.openai_service import generate_learning_recommendation
+from ai.course_loader import parse_rating
 import json
 import pandas as pd
+import re
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -26,12 +28,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 course_links_df = pd.read_csv("data/DIAI Academy eLearning details(Sheet2).csv")
 
 course_links_map = dict(
     zip(course_links_df["learning_path"], course_links_df["link"])
 )
+
+# Build a submodule-level ratings lookup from CSV
+# Key: (learning_path, sub_module) → rating value or None
+course_details_df = pd.read_csv("data/DIAI Academy eLearning details(Sheet1).csv")
+submodule_ratings_map = {}
+for _, row in course_details_df.iterrows():
+    lps = [lp.strip() for lp in str(row["learning_path"]).split(",")]
+    sub_name = str(row["sub_module"])
+    rating = parse_rating(row.get("user_feedback", ""))
+    for lp in lps:
+        submodule_ratings_map[(lp, sub_name)] = rating
 
 # ----------------------------
 # Database Dependency
@@ -648,3 +660,61 @@ def get_user_summary(username: str, db: Session = Depends(get_db)):
         "total_time_minutes": round(total_time / 60, 1),
         "time_per_screen_seconds": screen_time
     }
+
+
+def compute_path_ratings(ai_summary):
+    """Compute average rating per learning path part from ai_summary."""
+    if not ai_summary or "selected_paths" not in ai_summary:
+        return {}
+
+    result = {}
+    for selected_path in ai_summary["selected_paths"]:
+        path_name = selected_path.get("learning_path", "")
+        ratings = []
+
+        for module in selected_path.get("modules", []):
+            for sub in module.get("submodules", []):
+                # Try from ai_summary first (new paths have rating field)
+                r = sub.get("rating")
+                if r is None:
+                    # Fallback: look up from CSV-based map
+                    sub_name = sub.get("name", "")
+                    r = submodule_ratings_map.get((path_name, sub_name))
+                if r is not None:
+                    ratings.append(r)
+
+        if ratings:
+            result[path_name] = round(sum(ratings) / len(ratings), 1)
+
+    return result
+
+
+@app.get("/ratings/learning-path/{path_id}")
+def get_learning_path_ratings(path_id: int, db: Session = Depends(get_db)):
+    """Get per-part average ratings for a single learning path."""
+    path = db.query(models.LearningPath).filter(
+        models.LearningPath.id == path_id
+    ).first()
+
+    if not path:
+        raise HTTPException(status_code=404, detail="Learning path not found")
+
+    return compute_path_ratings(path.ai_summary)
+
+
+@app.get("/ratings/user/{username}")
+def get_user_ratings(username: str, db: Session = Depends(get_db)):
+    """Get average ratings for all of a user's learning paths (for dashboard)."""
+    paths = db.query(models.LearningPath).filter(
+        models.LearningPath.username == username,
+        models.LearningPath.status == "completed"
+    ).all()
+
+    result = {}
+    for lp in paths:
+        part_ratings = compute_path_ratings(lp.ai_summary)
+        if part_ratings:
+            all_ratings = list(part_ratings.values())
+            result[str(lp.id)] = round(sum(all_ratings) / len(all_ratings), 1)
+
+    return result

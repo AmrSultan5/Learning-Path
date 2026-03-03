@@ -72,9 +72,9 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
                 reverse=True
             )
 
-            # Build catalog lookup
+            # Build catalog lookup (duration + rating)
             sub_lookup = {
-                s["name"]: s["duration"]
+                s["name"]: {"duration": s["duration"], "rating": s.get("rating")}
                 for s in module_data["submodules"]
             }
 
@@ -87,7 +87,8 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
                 if name in sub_lookup:
                     ordered_subs.append({
                         "name": name,
-                        "duration": sub_lookup[name]
+                        "duration": sub_lookup[name]["duration"],
+                        "rating": sub_lookup[name]["rating"]
                     })
                     ranked_names.add(name)
 
@@ -107,7 +108,8 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
                 for sub in missing_subs:
                     ordered_subs.append({
                         "name": sub["name"],
-                        "duration": sub["duration"]
+                        "duration": sub["duration"],
+                        "rating": sub.get("rating")
                     })
 
             if not ordered_subs:
@@ -134,7 +136,7 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
             )
 
             sub_lookup = {
-                s["name"]: s["duration"]
+                s["name"]: {"duration": s["duration"], "rating": s.get("rating")}
                 for s in module_data["submodules"]
             }
 
@@ -145,12 +147,14 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
                 if name not in sub_lookup:
                     continue
 
-                duration = sub_lookup[name]
+                duration = sub_lookup[name]["duration"]
+                rating = sub_lookup[name]["rating"]
 
                 if sub_time + duration <= remaining:
                     partial_subs.append({
                         "name": name,
-                        "duration": duration
+                        "duration": duration,
+                        "rating": rating
                     })
                     sub_time += duration
 
@@ -164,7 +168,8 @@ def greedy_module_selection(ranked_modules, module_catalog, max_minutes):
                     if sub_time + duration <= remaining:
                         partial_subs.append({
                             "name": catalog_sub["name"],
-                            "duration": duration
+                            "duration": duration,
+                            "rating": catalog_sub.get("rating")
                         })
                         sub_time += duration
 

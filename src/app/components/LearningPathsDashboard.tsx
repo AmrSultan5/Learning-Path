@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, BookOpen, Calendar, TrendingUp, LogOut } from 'lucide-react';
+import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star } from 'lucide-react';
 import { useSound } from '@/utils/sounds';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import type { UserProfile } from '@/app/App';
@@ -31,40 +31,60 @@ export function LearningPathsDashboard({
   const { playClick, playTyping } = useSound();
 
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
+  const [ratingsMap, setRatingsMap] = useState<Record<string, number>>({});
   const API_BASE = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
-  async function loadProgressForPaths() {
-    const results = await Promise.all(
-      savedPaths.map(async (path) => {
-        try {
-          const res = await fetch(
-            `${API_BASE}/progress?username=${encodeURIComponent(userEmail)}&learning_path_id=${path.id}`
-          );
+    async function loadProgressForPaths() {
+      const results = await Promise.all(
+        savedPaths.map(async (path) => {
+          try {
+            const res = await fetch(
+              `${API_BASE}/progress?username=${encodeURIComponent(userEmail)}&learning_path_id=${path.id}`
+            );
 
-          const data = await res.json();
-          const percent = data.overall_progress ?? 0;
+            const data = await res.json();
+            const percent = data.overall_progress ?? 0;
 
-        return { id: path.id, percent };
-        } catch {
-          return { id: path.id, percent: 0 };
-        }
-      })
-    );
+            return { id: path.id, percent };
+          } catch {
+            return { id: path.id, percent: 0 };
+          }
+        })
+      );
 
-    const newProgressMap: Record<string, number> = {};
-    results.forEach(r => {
-      newProgressMap[r.id] = r.percent;
-    });
+      const newProgressMap: Record<string, number> = {};
+      results.forEach(r => {
+        newProgressMap[r.id] = r.percent;
+      });
 
-    setProgressMap(newProgressMap);
-  }
+      setProgressMap(newProgressMap);
+    }
 
-  if (savedPaths.length > 0) {
-    loadProgressForPaths();
-  }
+    if (savedPaths.length > 0) {
+      loadProgressForPaths();
+    }
 
-}, [savedPaths, userEmail]);
+  }, [savedPaths, userEmail]);
+
+  // Fetch ratings for all saved paths
+  useEffect(() => {
+    async function loadRatings() {
+      try {
+        const res = await fetch(
+          `${API_BASE}/ratings/user/${encodeURIComponent(userEmail)}`
+        );
+        const data = await res.json();
+        setRatingsMap(data);
+      } catch {
+        setRatingsMap({});
+      }
+    }
+
+    if (userEmail) {
+      loadRatings();
+    }
+  }, [userEmail, savedPaths]);
 
   const handleCreateNew = () => {
     playClick();
@@ -172,18 +192,16 @@ export function LearningPathsDashboard({
                 setHoveredCard(path.id);
               }}
               onMouseLeave={() => setHoveredCard(null)}
-              className={`bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-[#F40009] hover:shadow-lg transition-all duration-200 min-h-[220px] flex flex-col text-left ${
-                hoveredCard === path.id ? 'scale-105' : ''
-              }`}
+              className={`bg-white border-2 border-gray-200 rounded-2xl p-6 hover:border-[#F40009] hover:shadow-lg transition-all duration-200 min-h-[220px] flex flex-col text-left ${hoveredCard === path.id ? 'scale-105' : ''
+                }`}
             >
               {/* Path Icon */}
               <div className="flex items-start justify-between mb-4">
                 <div className="text-4xl">{getPathIcon(path.profile)}</div>
-                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                  progressMap[path.id] === 100
+                <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${progressMap[path.id] === 100
                     ? "bg-green-100 text-green-700"
                     : "bg-blue-100 text-blue-700"
-                }`}>
+                  }`}>
                   <TrendingUp className="w-3 h-3" />
                   {progressMap[path.id] === undefined
                     ? "Loading..."
@@ -198,7 +216,7 @@ export function LearningPathsDashboard({
                 <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
                   {path.name}
                 </h3>
-                
+
                 {path.recommendedPath && (
                   <div className="flex items-center gap-2 mb-2">
                     <BookOpen className="w-4 h-4 text-[#F40009]" />
@@ -227,6 +245,26 @@ export function LearningPathsDashboard({
                   )}
                 </div>
               </div>
+
+              {/* Star Rating */}
+              {ratingsMap[path.id] !== undefined && (
+                <div className="mt-2 flex items-center gap-1.5">
+                  <div className="flex items-center">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3.5 h-3.5 ${i < Math.round(ratingsMap[path.id])
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                          }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-medium text-gray-600">
+                    {ratingsMap[path.id].toFixed(1)}
+                  </span>
+                </div>
+              )}
 
               {/* Progress Bar */}
               <div className="mt-3">

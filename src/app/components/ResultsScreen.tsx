@@ -1,4 +1,4 @@
-import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle } from 'lucide-react';
+import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
@@ -24,6 +24,7 @@ interface AISummary {
       submodules: {
         name: string;
         duration: number;
+        rating?: number | null;
       }[];
     }[];
   }[];
@@ -32,10 +33,52 @@ interface AISummary {
   weekly_load_hours: number;
 }
 
+function StarRating({ rating }: { rating: number | null }) {
+  if (rating === null || rating === undefined) return null;
+  const fullStars = Math.floor(rating);
+  const hasHalf = rating - fullStars >= 0.25 && rating - fullStars < 0.75;
+  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <Star key={`full-${i}`} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        ))}
+        {hasHalf && (
+          <div className="relative w-4 h-4">
+            <Star className="absolute w-4 h-4 text-yellow-400" />
+            <div className="absolute overflow-hidden w-[50%]">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            </div>
+          </div>
+        )}
+        {Array.from({ length: emptyStars }).map((_, i) => (
+          <Star key={`empty-${i}`} className="w-4 h-4 text-yellow-400/40" />
+        ))}
+      </div>
+      <span className="text-sm font-medium text-white/90">{rating.toFixed(1)}</span>
+    </div>
+  );
+}
+
+function computePartRating(path: AISummary['selected_paths'][0]): number | null {
+  const ratings: number[] = [];
+  for (const mod of path.modules) {
+    for (const sub of mod.submodules) {
+      if (sub.rating !== null && sub.rating !== undefined) {
+        ratings.push(sub.rating);
+      }
+    }
+  }
+  if (ratings.length === 0) return null;
+  return Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
+}
+
 export function ResultsScreen({ profile, username, learningPathId, aiSummary, onRestart, onGoToDashboard }: ResultsScreenProps) {
 
   console.log("AI SUMMARY RECEIVED:", aiSummary);
-  
+
   const [selectedPath, setSelectedPath] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { playClick } = useSound();
@@ -62,75 +105,75 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
   }, [selectedPaths, completed]);
 
   // TOTAL TIME FROM AI
-const totalMinutes = aiSummary?.total_minutes ?? 0;
+  const totalMinutes = aiSummary?.total_minutes ?? 0;
 
-// CALCULATE REMAINING TIME
-const remainingMinutes = useMemo(() => {
-  let deducted = 0;
+  // CALCULATE REMAINING TIME
+  const remainingMinutes = useMemo(() => {
+    let deducted = 0;
 
-  selectedPaths.forEach((path, pIndex) => {
-    path.modules.forEach((module, mIndex) => {
-      module.submodules.forEach((sub, sIndex) => {
-        const key = `${pIndex}-${mIndex}-${sIndex}`;
-        if (completed[key]) {
-          deducted += sub.duration;
-        }
+    selectedPaths.forEach((path, pIndex) => {
+      path.modules.forEach((module, mIndex) => {
+        module.submodules.forEach((sub, sIndex) => {
+          const key = `${pIndex}-${mIndex}-${sIndex}`;
+          if (completed[key]) {
+            deducted += sub.duration;
+          }
+        });
       });
     });
-  });
 
-  return Math.max(totalMinutes - deducted, 0);
-}, [selectedPaths, completed, totalMinutes]);
+    return Math.max(totalMinutes - deducted, 0);
+  }, [selectedPaths, completed, totalMinutes]);
 
-const completedMinutes = totalMinutes - remainingMinutes;
+  const completedMinutes = totalMinutes - remainingMinutes;
 
   useEffect(() => {
-  async function loadProgress() {
-    try {
-      const res = await fetch(
-        `${API_BASE}/progress?username=${encodeURIComponent(username)}&learning_path_id=${learningPathId}`
-      );
-      const data = await res.json();
+    async function loadProgress() {
+      try {
+        const res = await fetch(
+          `${API_BASE}/progress?username=${encodeURIComponent(username)}&learning_path_id=${learningPathId}`
+        );
+        const data = await res.json();
 
-      if (data.progress_json) {
-        setCompleted(data.progress_json);
+        if (data.progress_json) {
+          setCompleted(data.progress_json);
+        }
+        setIsLoaded(true);
+      } catch (error) {
+        console.error("Failed to load progress", error);
+      } finally {
+        setIsLoaded(true);
       }
-      setIsLoaded(true);
-    } catch (error) {
-      console.error("Failed to load progress", error);
-    } finally {
-      setIsLoaded(true);
     }
-  }
-  if (username && learningPathId) {
-    loadProgress();
-  }
-}, [username, learningPathId]);
-
-useEffect(() => {
-  if (!isLoaded || !username || !learningPathId) return;
-
-  const timeout = setTimeout(async () => {
-    try {
-      await fetch(`${API_BASE}/progress`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          username: username,
-          learning_path_id: learningPathId,
-          progress_json: completed,
-          overall_progress: Math.round(overallProgress)
-        })
-      });
-    } catch (error) {
-      console.error("Failed to save progress", error);
+    if (username && learningPathId) {
+      loadProgress();
     }
-  }, 800); // waits 800ms after last change
+  }, [username, learningPathId]);
 
-  return () => clearTimeout(timeout);
-}, [completed, username, learningPathId, overallProgress]);
+  useEffect(() => {
+    if (!isLoaded || !username || !learningPathId) return;
+
+    const timeout = setTimeout(async () => {
+      try {
+        await fetch(`${API_BASE}/progress`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: username,
+            learning_path_id: learningPathId,
+            progress_json: completed,
+            overall_progress: Math.round(overallProgress)
+          })
+        });
+      } catch (error) {
+        console.error("Failed to save progress", error);
+      }
+    }, 800); // waits 800ms after last change
+
+    return () => clearTimeout(timeout);
+  }, [completed, username, learningPathId, overallProgress]);
 
   const openModal = (path: any) => {
     playClick();
@@ -156,34 +199,34 @@ useEffect(() => {
   };
 
   const calculateModuleProgress = (
-  pathIndex: number,
-  moduleIndex: number,
-  submodulesLength: number
-) => {
-  let completedCount = 0;
+    pathIndex: number,
+    moduleIndex: number,
+    submodulesLength: number
+  ) => {
+    let completedCount = 0;
 
-  for (let i = 0; i < submodulesLength; i++) {
-    const key = `${pathIndex}-${moduleIndex}-${i}`;
-    if (completed[key]) completedCount++;
-  }
+    for (let i = 0; i < submodulesLength; i++) {
+      const key = `${pathIndex}-${moduleIndex}-${i}`;
+      if (completed[key]) completedCount++;
+    }
 
-  return (completedCount / submodulesLength) * 100;
-};
+    return (completedCount / submodulesLength) * 100;
+  };
 
-const calculatePathProgress = (pathIndex: number) => {
-  let total = 0;
-  let done = 0;
+  const calculatePathProgress = (pathIndex: number) => {
+    let total = 0;
+    let done = 0;
 
-  selectedPaths[pathIndex]?.modules.forEach((module, mIndex) => {
-    module.submodules.forEach((_, sIndex) => {
-      total++;
-      const key = `${pathIndex}-${mIndex}-${sIndex}`;
-      if (completed[key]) done++;
+    selectedPaths[pathIndex]?.modules.forEach((module, mIndex) => {
+      module.submodules.forEach((_, sIndex) => {
+        total++;
+        const key = `${pathIndex}-${mIndex}-${sIndex}`;
+        if (completed[key]) done++;
+      });
     });
-  });
 
-  return total === 0 ? 0 : (done / total) * 100;
-};
+    return total === 0 ? 0 : (done / total) * 100;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12 px-4">
@@ -254,11 +297,11 @@ const calculatePathProgress = (pathIndex: number) => {
               Remaining: {formatMinutes(remainingMinutes)}
             </span>
           </div>
-            {overallProgress === 100 && (
-              <div className="mt-4 text-center text-[#F40009] font-bold text-lg">
-                🎉 Congratulations! You completed your full learning journey!
-              </div>
-            )}
+          {overallProgress === 100 && (
+            <div className="mt-4 text-center text-[#F40009] font-bold text-lg">
+              🎉 Congratulations! You completed your full learning journey!
+            </div>
+          )}
         </div>
 
         {/* Recommended Paths */}
@@ -301,163 +344,171 @@ const calculatePathProgress = (pathIndex: number) => {
 
                 return (
 
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-lg overflow-hidden"
-                >
-                  <div className="bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg">
-                        {index + 1}
-                      </div>
-
-                      <div className="flex-1">
-                        <h3 className="text-2xl mb-2">
-                          {path.learning_path}
-                        </h3>
-
-                        <p className="text-white/90 mb-3">
-                          AI selected this learning journey based on your {profile.jobFunction} role and {profile.experienceLevel} experience.
-                        </p>
-
-                        <div className="flex flex-col text-sm mt-2 gap-1">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>
-                            {pathEstimatedWeeks} {weeklyHours} hrs/week
-                          </span>
+                  <div
+                    key={index}
+                    className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                  >
+                    <div className="bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white p-6">
+                      <div className="flex items-start gap-4 mb-4">
+                        <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-lg">
+                          {index + 1}
                         </div>
 
-                        <div className="text-xs text-white/90">
-                          Total: {formatMinutes(pathTotalMinutes)} · 
-                          Completed: {formatMinutes(pathCompletedMinutes)} · 
-                          Remaining: {formatMinutes(pathRemainingMinutes)}
-                        </div>
-                      </div>
-                      </div>
-                    </div>
-                  </div>
+                        <div className="flex-1">
+                          <h3 className="text-2xl mb-2">
+                            {path.learning_path}
+                          </h3>
 
-                  {/* Modules */}
-                  <div className="p-6 space-y-6">
-                    <div className="mb-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Path Progress</span>
-                        <span className="text-[#F40009] font-semibold">
-                          {Math.round(pathProgress)}%
-                        </span>
-                      </div>
+                          <p className="text-white/90 mb-3">
+                            AI selected this learning journey based on your {profile.jobFunction} role and {profile.experienceLevel} experience.
+                          </p>
 
-                      <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
-                          style={{ width: `${pathProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                    {path.modules.map((module, moduleIndex) => {
-                      const moduleProgress = calculateModuleProgress(
-                        index,
-                        moduleIndex,
-                        module.submodules.length
-                      );
+                          {/* Star Rating */}
+                          {(() => {
+                            const partRating = computePartRating(path);
+                            return partRating !== null ? (
+                              <div className="mb-2">
+                                <StarRating rating={partRating} />
+                              </div>
+                            ) : null;
+                          })()}
 
-                      return (
-                        <div key={moduleIndex}>
-
-                          {/* Module Title */}
-                          <div className="flex justify-between items-center mb-2">
-                            <h4 className="text-lg font-semibold text-gray-800">
-                              {module.module_name}
-                            </h4>
-
-                            {/* Mark Module Complete Button */}
-                            <button
-                              onClick={() => {
-                                module.submodules.forEach((_, subIndex) => {
-                                  const key = `${index}-${moduleIndex}-${subIndex}`;
-                                  setCompleted(prev => ({
-                                    ...prev,
-                                    [key]: true
-                                  }));
-                                });
-                              }}
-                              className="text-xs text-[#F40009] hover:underline"
-                            >
-                              Mark Complete
-                            </button>
-                          </div>
-
-                          {/* Module Progress */}
-                          <div className="mb-3">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span className="text-gray-500">Module Progress</span>
-                              <span className="text-[#F40009] font-semibold">
-                                {Math.round(moduleProgress)}%
+                          <div className="flex flex-col text-sm mt-2 gap-1">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              <span>
+                                {weeklyHours} hrs/week
                               </span>
                             </div>
 
-                            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
-                                style={{ width: `${moduleProgress}%` }}
-                              />
+                            <div className="text-xs text-white/90">
+                              Total: {formatMinutes(pathTotalMinutes)} ·
+                              Completed: {formatMinutes(pathCompletedMinutes)} ·
+                              Remaining: {formatMinutes(pathRemainingMinutes)}
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
 
-                          {/* Submodules */}
-                          <div className="space-y-2">
-                            {module.submodules.map((sub, subIndex) => (
-                              <div
-                                key={subIndex}
-                                className="flex items-center justify-between bg-gray-50 p-3 rounded-lg transition-all duration-300 hover:bg-red-50 hover:shadow-sm hover:translate-y-[-1px]"
+                    {/* Modules */}
+                    <div className="p-6 space-y-6">
+                      <div className="mb-4">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Path Progress</span>
+                          <span className="text-[#F40009] font-semibold">
+                            {Math.round(pathProgress)}%
+                          </span>
+                        </div>
+
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
+                            style={{ width: `${pathProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                      {path.modules.map((module, moduleIndex) => {
+                        const moduleProgress = calculateModuleProgress(
+                          index,
+                          moduleIndex,
+                          module.submodules.length
+                        );
+
+                        return (
+                          <div key={moduleIndex}>
+
+                            {/* Module Title */}
+                            <div className="flex justify-between items-center mb-2">
+                              <h4 className="text-lg font-semibold text-gray-800">
+                                {module.module_name}
+                              </h4>
+
+                              {/* Mark Module Complete Button */}
+                              <button
+                                onClick={() => {
+                                  module.submodules.forEach((_, subIndex) => {
+                                    const key = `${index}-${moduleIndex}-${subIndex}`;
+                                    setCompleted(prev => ({
+                                      ...prev,
+                                      [key]: true
+                                    }));
+                                  });
+                                }}
+                                className="text-xs text-[#F40009] hover:underline"
                               >
-                                <div className="flex items-center gap-3 transition-transform duration-200 ease-out">
-                                  <button
-                                    onClick={() =>
-                                      toggleSubmodule(index, moduleIndex, subIndex)
-                                    }
-                                    className={`
-                                      relative w-6 h-6 flex items-center justify-center
-                                      rounded-md border-2 transition-all duration-300
-                                      ${
-                                        completed[`${index}-${moduleIndex}-${subIndex}`]
-                                          ? "bg-gradient-to-br from-[#F40009] to-[#DC0012] border-[#F40009] shadow-md scale-105"
-                                          : "border-gray-300 bg-white hover:border-[#F40009] hover:shadow-sm"
-                                      }
-                                    `}
-                                  >
-                                    {completed[`${index}-${moduleIndex}-${subIndex}`] && (
-                                      <CheckCircle2 className="w-4 h-4 text-white transition-all duration-200 scale-100" />
-                                    )}
-                                  </button>
+                                Mark Complete
+                              </button>
+                            </div>
 
-                                  <a
-                                    href={path.link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={`text-sm transition-all duration-300 ${
-                                      completed[`${index}-${moduleIndex}-${subIndex}`]
-                                        ? "line-through text-gray-400"
-                                        : "text-gray-700 hover:text-[#F40009]"
-                                    }`}
-                                  >
-                                    {sub.name}
-                                  </a>
-                                </div>
-
-                                <span className="text-xs text-gray-500">
-                                  {sub.duration} min
+                            {/* Module Progress */}
+                            <div className="mb-3">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-500">Module Progress</span>
+                                <span className="text-[#F40009] font-semibold">
+                                  {Math.round(moduleProgress)}%
                                 </span>
                               </div>
-                            ))}
-                          </div>
 
-                        </div>
-                      );
-                    })}
+                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-[#F40009] to-[#DC0012] transition-all duration-700 ease-out"
+                                  style={{ width: `${moduleProgress}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Submodules */}
+                            <div className="space-y-2">
+                              {module.submodules.map((sub, subIndex) => (
+                                <div
+                                  key={subIndex}
+                                  className="flex items-center justify-between bg-gray-50 p-3 rounded-lg transition-all duration-300 hover:bg-red-50 hover:shadow-sm hover:translate-y-[-1px]"
+                                >
+                                  <div className="flex items-center gap-3 transition-transform duration-200 ease-out">
+                                    <button
+                                      onClick={() =>
+                                        toggleSubmodule(index, moduleIndex, subIndex)
+                                      }
+                                      className={`
+                                      relative w-6 h-6 flex items-center justify-center
+                                      rounded-md border-2 transition-all duration-300
+                                      ${completed[`${index}-${moduleIndex}-${subIndex}`]
+                                          ? "bg-gradient-to-br from-[#F40009] to-[#DC0012] border-[#F40009] shadow-md scale-105"
+                                          : "border-gray-300 bg-white hover:border-[#F40009] hover:shadow-sm"
+                                        }
+                                    `}
+                                    >
+                                      {completed[`${index}-${moduleIndex}-${subIndex}`] && (
+                                        <CheckCircle2 className="w-4 h-4 text-white transition-all duration-200 scale-100" />
+                                      )}
+                                    </button>
+
+                                    <a
+                                      href={path.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`text-sm transition-all duration-300 ${completed[`${index}-${moduleIndex}-${subIndex}`]
+                                          ? "line-through text-gray-400"
+                                          : "text-gray-700 hover:text-[#F40009]"
+                                        }`}
+                                    >
+                                      {sub.name}
+                                    </a>
+                                  </div>
+
+                                  <span className="text-xs text-gray-500">
+                                    {sub.duration} min
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
                 );
               })}
             </div>
@@ -508,7 +559,7 @@ function formatMinutes(minutes: number) {
 
 function formatJobFunction(jobFunction: JobFunction | null): string {
   if (!jobFunction) return '';
-  
+
   const labels: Record<JobFunction, string> = {
     'commercial': 'Commercial',
     'supply-chain': 'Supply Chain',
@@ -518,6 +569,6 @@ function formatJobFunction(jobFunction: JobFunction | null): string {
     'hr': 'Human Resources',
     'other': 'Other'
   };
-  
+
   return labels[jobFunction];
 }
