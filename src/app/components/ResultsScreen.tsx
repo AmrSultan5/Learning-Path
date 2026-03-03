@@ -1,4 +1,4 @@
-import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star } from 'lucide-react';
+import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
@@ -116,6 +116,30 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // Naming modal state
+  const [showNamingModal, setShowNamingModal] = useState(false);
+  const [pathNameInput, setPathNameInput] = useState(
+    `${profile.jobFunction ? profile.jobFunction.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'My'} Learning Path`
+  );
+  const [savingName, setSavingName] = useState(false);
+
+  const handleSaveWithName = async () => {
+    if (!pathNameInput.trim()) return;
+    setSavingName(true);
+    try {
+      await fetch(`${API_BASE}/learning-path/${learningPathId}/rename`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: pathNameInput.trim() })
+      });
+    } catch (err) {
+      console.error('Failed to rename path:', err);
+    }
+    setSavingName(false);
+    setShowNamingModal(false);
+    onGoToDashboard();
+  };
 
   const overallProgress = useMemo(() => {
     let total = 0;
@@ -566,13 +590,58 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, on
           <button
             onClick={() => {
               playClick();
-              onGoToDashboard();
+              setShowNamingModal(true);
             }}
             className="px-8 py-3 rounded-full bg-[#F40009] text-white hover:bg-[#DC0012] transition-all shadow-md"
           >
             Save This Learning Journey
           </button>
         </div>
+
+        {/* Naming Modal */}
+        {showNamingModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-gray-900">Name Your Learning Path</h3>
+                <button
+                  onClick={() => setShowNamingModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <input
+                type="text"
+                value={pathNameInput}
+                onChange={(e) => setPathNameInput(e.target.value)}
+                placeholder="Enter a name for your learning path..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009] mb-4"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && pathNameInput.trim()) {
+                    handleSaveWithName();
+                  }
+                }}
+              />
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setShowNamingModal(false)}
+                  className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveWithName}
+                  disabled={!pathNameInput.trim() || savingName}
+                  className="px-6 py-2 bg-[#F40009] text-white text-sm font-medium rounded-lg hover:bg-[#DC0012] transition-colors disabled:opacity-50"
+                >
+                  {savingName ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Path Chat Modal */}

@@ -536,6 +536,29 @@ Additional Context:
         "ai_summary": ai_result
     }
 
+
+class RenameRequest(BaseModel):
+    name: str
+
+
+@app.patch("/learning-path/{path_id}/rename")
+def rename_learning_path(
+    path_id: int,
+    data: RenameRequest,
+    db: Session = Depends(get_db)
+):
+    path = db.query(models.LearningPath).filter(
+        models.LearningPath.id == path_id
+    ).first()
+
+    if not path:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    path.name = data.name
+    db.commit()
+
+    return {"message": "Renamed", "name": data.name}
+
 @app.get("/learning-paths/{username}", response_model=List[LearningPathOut])
 def get_learning_paths(username: str, db: Session = Depends(get_db)):
 

@@ -40,34 +40,34 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
     // Premium delay for smoother UX
     setTimeout(async () => {
-    try {
-      const fullEmail = `${username.toLowerCase()}@cchellenic.com`;
+      try {
+        const fullEmail = `${username.toLowerCase()}@cchellenic.com`;
 
-      const res = await fetch("https://learning-path-production-b09f.up.railway.app/session/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          username: fullEmail
-        })
-      });
+        const res = await fetch("https://learning-path-production-b09f.up.railway.app/session/start", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username: fullEmail
+          })
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      // Store session info
-      localStorage.setItem("username", fullEmail);
-      localStorage.setItem("session_id", data.session_id);
+        // Store session info
+        localStorage.setItem("username", fullEmail);
+        localStorage.setItem("session_id", data.session_id);
 
-      // Continue app flow
-      onLogin(fullEmail);
+        // Continue app flow
+        onLogin(fullEmail);
 
-    } catch (err) {
-      setError("Failed to start session");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, 600);
+      } catch (err) {
+        setError("Failed to start session");
+      } finally {
+        setIsSubmitting(false);
+      }
+    }, 600);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

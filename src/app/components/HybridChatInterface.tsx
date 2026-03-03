@@ -504,8 +504,8 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                   key={area.value}
                   onClick={() => handleInterestToggle(area.value)}
                   className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 transition-all text-left ${isSelected
-                      ? 'border-[#F40009] bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-[#F40009] bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
                     }`}
                 >
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
@@ -550,8 +550,8 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                   key={goal.value}
                   onClick={() => handleGoalToggle(goal.value)}
                   className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border-2 transition-all text-center ${isSelected
-                      ? 'border-[#F40009] bg-red-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-[#F40009] bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
                     }`}
                 >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-[#F40009] text-white' : 'bg-gray-100 text-gray-600'
@@ -634,8 +634,8 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
               </div>
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.sender === 'bot'
-                    ? 'bg-gray-100 text-gray-800'
-                    : 'bg-[#F40009] text-white'
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'bg-[#F40009] text-white'
                   }`}
               >
                 <p className="text-sm leading-relaxed">{message.text}</p>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star, MessageSquare, Send } from 'lucide-react';
+import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star, MessageSquare, Send, Pencil, Check } from 'lucide-react';
 import { useSound } from '@/utils/sounds';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import type { UserProfile } from '@/app/App';
@@ -84,7 +84,17 @@ export function LearningPathsDashboard({
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [showCommentFor, setShowCommentFor] = useState<string | null>(null);
   const [savingRating, setSavingRating] = useState<string | null>(null);
+  const [editingNameFor, setEditingNameFor] = useState<string | null>(null);
+  const [editNameInput, setEditNameInput] = useState('');
+  const [pathNames, setPathNames] = useState<Record<string, string>>({});
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // Initialize path names from savedPaths
+  useEffect(() => {
+    const names: Record<string, string> = {};
+    savedPaths.forEach(p => { names[p.id] = p.name; });
+    setPathNames(names);
+  }, [savedPaths]);
 
   useEffect(() => {
     async function loadProgressForPaths() {
@@ -183,6 +193,28 @@ export function LearningPathsDashboard({
     if (currentRating === 0) return;
     saveRating(pathId, currentRating, commentInputs[pathId] || '');
     setShowCommentFor(null);
+  };
+
+  const handleStartEdit = (pathId: string) => {
+    playClick();
+    setEditingNameFor(pathId);
+    setEditNameInput(pathNames[pathId] || '');
+  };
+
+  const handleSaveRename = async (pathId: string) => {
+    if (!editNameInput.trim()) return;
+    playClick();
+    try {
+      await fetch(`${API_BASE}/learning-path/${pathId}/rename`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: editNameInput.trim() })
+      });
+      setPathNames(prev => ({ ...prev, [pathId]: editNameInput.trim() }));
+    } catch (err) {
+      console.error('Failed to rename:', err);
+    }
+    setEditingNameFor(null);
   };
 
   const handleCreateNew = () => {
@@ -316,9 +348,46 @@ export function LearningPathsDashboard({
 
                 {/* Path Details */}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
-                    {path.name}
-                  </h3>
+                  {editingNameFor === path.id ? (
+                    <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
+                      <input
+                        type="text"
+                        value={editNameInput}
+                        onChange={(e) => setEditNameInput(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveRename(path.id);
+                          if (e.key === 'Escape') setEditingNameFor(null);
+                        }}
+                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009]"
+                        autoFocus
+                      />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveRename(path.id);
+                        }}
+                        className="p-1 text-green-600 hover:text-green-700"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 mb-2 group/name">
+                      <h3 className="font-semibold text-gray-900 line-clamp-2">
+                        {pathNames[path.id] || path.name}
+                      </h3>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartEdit(path.id);
+                        }}
+                        className="opacity-0 group-hover/name:opacity-100 p-1 text-gray-400 hover:text-[#F40009] transition-all"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
 
                   {path.recommendedPath && (
                     <div className="flex items-center gap-2 mb-2">
