@@ -357,8 +357,20 @@ export function LearningPathsDashboard({
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => {
                           e.stopPropagation();
-                          if (e.key === 'Enter') handleSaveRename(path.id);
-                          if (e.key === 'Escape') setEditingNameFor(null);
+
+                          if (e.key === ' ') {
+                            e.preventDefault();
+                          }
+
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleSaveRename(path.id);
+                          }
+
+                          if (e.key === 'Escape') {
+                            e.preventDefault();
+                            setEditingNameFor(null);
+                          }
                         }}
                         className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#F40009]/20 focus:border-[#F40009]"
                         autoFocus
