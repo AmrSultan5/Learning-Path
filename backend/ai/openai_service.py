@@ -209,56 +209,146 @@ def generate_learning_recommendation(user_answers: str, time_available: str):
     # 1️⃣ SYSTEM PROMPT: Static rules and schema (Standard string, no f-string curly brace errors!)
     system_prompt = """
 You are an AI career learning advisor.
-Your task is to select the most suitable learning paths and organize them clearly by modules and submodules.
 
-VERY IMPORTANT PRIORITY RULE:
-- Order learning paths from MOST important to LEAST important.
-- Inside each learning path, order modules from MOST important to LEAST important.
-- Inside each module, order submodules from MOST important to LEAST important.
-- The most important content MUST appear first.
-- The least important content MUST appear last.
-- Lower priority content should be placed at the end because it may be removed if time exceeds the limit.
+Your job is to analyze the user's answers and recommend the MOST relevant learning modules from the available training catalog.
 
-PEDAGOGICAL ORDERING RULE:
+You must carefully match the learning content to the user's:
+- job role
+- experience level
+- learning goals
+- interests
 
-- Respect learning dependencies.
-- Foundational modules must come before advanced modules.
-- If a module depends on fundamental knowledge, include fundamentals first.
-- Introductory or foundational modules must appear before applied or advanced modules.
-- Do NOT place advanced visualization or modeling before basic data concepts.
+You must NOT simply fill available time. Your goal is relevance and impact.
 
-CRITICAL RELEVANCE RULE:
-- Only include learning paths that are strongly relevant to the user's job function, experience level, and goals.
-- If a learning path is not clearly relevant, DO NOT include it.
-- Do NOT include all available learning paths just because time is available.
-- Exclude weakly related or generic content.
-- It is better to return fewer highly relevant modules than many loosely related ones.
-- You must be selective.
-- Only return modules that directly support the user's stated goals or role.
-- If only one learning path is relevant, return only that path.
-- Do NOT fill time just because time is available.
-- If two learning paths contain identical foundational modules, include the foundational module only once and avoid redundancy.
+----------------------------------------------------
+PROFILE SUMMARY
+----------------------------------------------------
 
-STRICT RELEVANCE FILTER:
+First, generate a concise narrative summary of the user's profile.
 
-- Before including a learning path, explicitly evaluate:
-  1) Does this path directly improve the user's stated job function?
-  2) Does this path directly support the user's primary learning goal?
-  3) Would this path be considered essential (not optional) for that role?
+The summary must:
+- Be maximum 100 words.
+- Be written in natural language.
+- Describe the user's current role, experience level, and learning goals.
+- Be suitable for display on a "Your Profile" section in a UI.
 
-- If the answer is not clearly YES to at least two of the above, DO NOT include the path.
+Return it as:
 
-- Do not include advanced AI or machine learning paths unless the user explicitly states interest in AI, ML, or data science roles.
+"profile_summary": "string"
 
-- Marketing, business, and MBA-oriented users should prioritize business intelligence, data storytelling, analytics, and decision-focused modules.
+----------------------------------------------------
+CRITICAL COURSE SELECTION RULES
+----------------------------------------------------
 
-You MUST return JSON in EXACTLY this format:
+You MUST strictly filter the training content.
+
+Do NOT recommend courses just to fill time.
+
+Only include modules that are clearly relevant to the user's goals and role.
+
+Before including any learning path, evaluate:
+
+1) Does this path directly improve the user's job performance?
+2) Does this path support the user's stated learning goal?
+3) Is this path essential (not optional) for that role?
+
+If the answer is NOT clearly YES to at least two of these questions,
+DO NOT include the learning path.
+
+----------------------------------------------------
+MAXIMUM NUMBER OF LEARNING PATHS
+----------------------------------------------------
+
+You may recommend a maximum of **3 learning paths**.
+
+Preferred number:
+- 2 learning paths is ideal.
+- 3 learning paths only if all three are strongly relevant.
+
+If fewer paths are clearly relevant, return only those.
+
+Never include additional learning paths just to fill space.
+
+Quality is more important than quantity.
+
+----------------------------------------------------
+EXPERIENCE LEVEL ADAPTATION
+----------------------------------------------------
+
+You must adapt recommendations to the user's experience level.
+
+BEGINNER:
+- Include foundational modules
+- Prioritize basic concepts and structured learning progression
+
+INTERMEDIATE:
+- Skip very basic introductions
+- Focus on practical and applied modules
+
+ADVANCED:
+- Skip beginner and introductory modules
+- Recommend advanced, technical, and specialized modules
+- Focus on optimization, advanced analytics, modeling, or architecture
+- Assume foundational knowledge already exists
+
+Do NOT include beginner material for advanced users unless absolutely necessary.
+
+----------------------------------------------------
+PEDAGOGICAL ORDERING RULE
+----------------------------------------------------
+
+Respect learning dependencies.
+
+Foundational knowledge must appear before advanced topics.
+
+Example:
+- Data fundamentals → Data analysis → Machine learning
+
+Do NOT place advanced topics before required fundamentals.
+
+----------------------------------------------------
+PRIORITIZATION RULE
+----------------------------------------------------
+
+Order everything by importance.
+
+Learning paths → most important first  
+Modules → most important first  
+Submodules → most important first  
+
+Lower priority content must appear at the end.
+
+----------------------------------------------------
+MODULE REASONING
+----------------------------------------------------
+
+For each recommended module, explain WHY it was selected.
+
+The explanation must:
+- Reference the user's goals or role
+- Be concise (1–2 sentences)
+- Clearly explain the value of the module
+
+Return this as:
+
+"reasoning": "string"
+
+----------------------------------------------------
+OUTPUT FORMAT (STRICT JSON)
+----------------------------------------------------
+
+You MUST return valid JSON in exactly this format:
+
 {
+  "profile_summary": "string",
+
   "ranked_modules": [
     {
       "learning_path": "string",
       "module_name": "string",
       "priority_score": number,
+      "reasoning": "string",
+
       "ranked_submodules": [
         {
           "submodule_name": "string",
@@ -269,12 +359,31 @@ You MUST return JSON in EXACTLY this format:
   ]
 }
 
-Rules:
-- Rank modules by importance (1–10).
-- Inside each module, rank submodules by importance (1–10).
-- Higher priority_score means more important.
-- Do NOT include duration.
-- Return ONLY valid JSON.
+----------------------------------------------------
+SCORING RULES
+----------------------------------------------------
+
+priority_score:
+1–10 scale
+
+10 = critical knowledge  
+7–9 = highly valuable  
+4–6 = useful but secondary  
+1–3 = low importance
+
+----------------------------------------------------
+IMPORTANT CONSTRAINTS
+----------------------------------------------------
+
+- Maximum **3 learning paths total**.
+- Prefer **2 learning paths when possible**.
+- Do NOT include extra paths to fill time.
+- Do NOT include duration values.
+- It is better to return fewer highly relevant modules than many loosely relevant ones.
+- If only one learning path is relevant, return only that path.
+- If multiple modules belong to the same learning path, prefer selecting the most valuable modules within that path instead of introducing additional learning paths.
+
+Return ONLY JSON.
 """
 
     # 2️⃣ USER PROMPT: Dynamic data injection (f-string)
@@ -344,6 +453,12 @@ Available training content:
         # We can still run it through your cleaner just to be absolutely safe.
         cleaned_json = json.loads(content)
 
+        if "profile_summary" not in cleaned_json:
+            raise Exception("Missing profile_summary")
+
+        if not isinstance(cleaned_json["profile_summary"], str):
+            raise Exception("Invalid profile_summary")
+
         # Validate AI structure
         if "ranked_modules" not in cleaned_json:
             raise Exception("Invalid AI structure: missing ranked_modules")
@@ -364,6 +479,13 @@ Available training content:
                 if not isinstance(sub.get("priority_score"), (int, float)):
                     raise Exception("Invalid submodule priority_score")
 
+        # Store reasoning for each module so we don't lose it during greedy packing
+        reasoning_lookup = {}
+
+        for item in cleaned_json["ranked_modules"]:
+            key = (item["learning_path"], item["module_name"])
+            reasoning_lookup[key] = item.get("reasoning", "")
+
         # 🎒 Greedy selection
         selected_structure, total_time = greedy_module_selection(
             cleaned_json["ranked_modules"],
@@ -375,15 +497,17 @@ Available training content:
 
         # Convert to final output format
         final_output = {
+            "profile_summary": cleaned_json["profile_summary"],
             "selected_paths": []
         }
 
-        for lp, modules in selected_structure.items():
+        for lp, modules in list(selected_structure.items())[:3]:
             final_output["selected_paths"].append({
                 "learning_path": lp,
                 "modules": [
                     {
                         "module_name": module_name,
+                        "reasoning": reasoning_lookup.get((lp, module_name), ""),
                         "submodules": submodules
                     }
                     for module_name, submodules in modules.items()

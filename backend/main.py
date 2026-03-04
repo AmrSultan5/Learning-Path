@@ -161,6 +161,13 @@ def adapt_to_time(ai_result, total_budget_minutes, experience=None, interests=No
 
     scored_submodules = []
 
+    # Build reasoning lookup so we don't lose it during rebuild
+    reasoning_lookup = {}
+    for path in ai_result["selected_paths"]:
+        for module in path.get("modules", []):
+            key = (path["learning_path"], module["module_name"])
+            reasoning_lookup[key] = module.get("reasoning", "")
+
     # Flatten new structure
     for path in ai_result["selected_paths"]:
         path_name = path["learning_path"]
@@ -238,6 +245,7 @@ def adapt_to_time(ai_result, total_budget_minutes, experience=None, interests=No
         if not module_entry:
             module_entry = {
                 "module_name": module_name,
+                "reasoning": reasoning_lookup.get((path_name, module_name), ""),
                 "submodules": []
             }
             adapted_paths[path_name].append(module_entry)

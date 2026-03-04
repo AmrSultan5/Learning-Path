@@ -1,4 +1,4 @@
-import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X } from 'lucide-react';
+import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X, User } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
@@ -18,11 +18,13 @@ interface ResultsScreenProps {
 }
 
 interface AISummary {
+  profile_summary?: string;
   selected_paths: {
     learning_path: string;
     link?: string;
     modules: {
       module_name: string;
+      reasoning?: string;
       submodules: {
         name: string;
         duration: number;
@@ -307,25 +309,34 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
 
         {/* Profile Summary */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-          <h2 className="text-xl text-gray-800 mb-4">Your Profile</h2>
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Job Function</p>
-              <p className="text-gray-800">{formatJobFunction(profile.jobFunction)}</p>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-[#F40009]" />
             </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Experience</p>
-              <p className="text-gray-800 capitalize">{profile.experienceLevel}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Interest Areas</p>
-              <p className="text-gray-800">{profile.interests.length}</p>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-1">Time Available</p>
-              <p className="text-gray-800">{profile.timeCommitment} hours</p>
-            </div>
+            <h2 className="text-xl text-gray-800">Your Profile</h2>
           </div>
+          {aiSummary?.profile_summary ? (
+            <p className="text-gray-700 leading-relaxed">{aiSummary.profile_summary}</p>
+          ) : (
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">Job Function</p>
+                <p className="text-gray-800">{formatJobFunction(profile.jobFunction)}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">Experience</p>
+                <p className="text-gray-800 capitalize">{profile.experienceLevel}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">Interest Areas</p>
+                <p className="text-gray-800">{profile.interests.length}</p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600 mb-1">Time Available</p>
+                <p className="text-gray-800">{profile.timeCommitment} hours</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Overall Progress */}
@@ -474,12 +485,20 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                           <div key={moduleIndex}>
 
                             {/* Module Title */}
-                            <div className="flex justify-between items-center mb-2">
-                              <div className="flex items-center gap-3">
-                                <h4 className="text-lg font-semibold text-gray-800">
-                                  {module.module_name}
-                                </h4>
-                                <ModuleStarRating rating={computeModuleRating(module)} />
+                            <div className="flex justify-between items-start mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3">
+                                  <h4 className="text-lg font-semibold text-gray-800">
+                                    {module.module_name}
+                                  </h4>
+                                  <ModuleStarRating rating={computeModuleRating(module)} />
+                                </div>
+                                {module.reasoning && (
+                                  <p className="text-sm text-gray-500 italic mt-1">
+                                    <Lightbulb className="w-3.5 h-3.5 inline-block mr-1 text-amber-500" />
+                                    {module.reasoning}
+                                  </p>
+                                )}
                               </div>
 
                               {/* Mark Module Complete Button */}
@@ -493,7 +512,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                                     }));
                                   });
                                 }}
-                                className="text-xs text-[#F40009] hover:underline"
+                                className="text-xs text-[#F40009] hover:underline flex-shrink-0 ml-4"
                               >
                                 Mark Complete
                               </button>
