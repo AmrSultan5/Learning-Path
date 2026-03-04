@@ -698,9 +698,9 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                   onChange={(e) => setCurrentInput(e.target.value)}
                   onKeyDown={(e) => {
                     // Typing sound
-                    if (e.key.length === 1 || e.key === "Backspace" || e.key === "Delete") {
-                      playTyping();
-                    }
+                    //if (e.key.length === 1 || e.key === "Backspace" || e.key === "Delete") {
+                      //playTyping();
+                    //}
 
                     // Submit on Enter
                     if (e.key === "Enter" && !e.shiftKey) {
