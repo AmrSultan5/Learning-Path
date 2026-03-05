@@ -200,9 +200,9 @@ def _get_embedding(text: str) -> List[float]:
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
     api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
-    embedding_model = "text-embedding-3-small"
+    embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
 
-    url = f"{azure_endpoint}/deployments/{embedding_model}/embeddings?api-version={api_version}"
+    url = f"{azure_endpoint}/deployments/{embedding_deployment}/embeddings?api-version={api_version}"
     headers = {
         "Content-Type": "application/json",
         "Ocp-Apim-Subscription-Key": api_key
