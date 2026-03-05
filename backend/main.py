@@ -19,6 +19,17 @@ import math
 
 load_dotenv()
 
+EMBEDDING_CACHE_FILE = os.path.join(
+    os.path.dirname(__file__),
+    "data",
+    "transcript_embeddings.json"
+)
+
+# Force-delete cache on startup (temporary fix)
+if os.path.exists(EMBEDDING_CACHE_FILE):
+    os.remove(EMBEDDING_CACHE_FILE)
+    print("[Hellen+] Deleted old embedding cache")
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -263,8 +274,6 @@ def generate_chunk_embeddings(
 # Embedding Disk Cache
 # ----------------------------
 
-EMBEDDING_CACHE_FILE = os.path.join(os.path.dirname(__file__), "data", "transcript_embeddings.json")
-
 
 def _cache_is_valid(transcript_file: str, cache_file: str) -> bool:
     """Return True if cache exists and is newer than the transcript file."""
@@ -355,6 +364,15 @@ submodule_chunks_map = build_submodule_chunks(transcript_data)
 
 print(f"[Hellen+] Loaded transcripts for {len(transcript_data)} submodules")
 print(f"[Hellen+] Total chunks: {sum(len(v) for v in submodule_chunks_map.values())}")
+
+
+print("TEST EMBEDDING START")
+
+try:
+    emb = _get_embedding("Hello world")
+    print("Embedding length:", len(emb))
+except Exception as e:
+    print("Embedding test failed:", e)
 
 try:
     if _cache_is_valid(TRANSCRIPT_FILE, EMBEDDING_CACHE_FILE):
