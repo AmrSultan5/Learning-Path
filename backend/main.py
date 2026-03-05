@@ -19,16 +19,16 @@ import math
 
 load_dotenv()
 
-EMBEDDING_CACHE_FILE = os.path.join(
-    os.path.dirname(__file__),
-    "data",
-    "transcript_embeddings.json"
-)
+#EMBEDDING_CACHE_FILE = os.path.join(
+#    os.path.dirname(__file__),
+#    "data",
+#    "transcript_embeddings.json"
+#)
 
 # Force-delete cache on startup (temporary fix)
-if os.path.exists(EMBEDDING_CACHE_FILE):
-    os.remove(EMBEDDING_CACHE_FILE)
-    print("[Hellen+] Deleted old embedding cache")
+#if os.path.exists(EMBEDDING_CACHE_FILE):
+#    os.remove(EMBEDDING_CACHE_FILE)
+#    print("[Hellen+] Deleted old embedding cache")
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -206,8 +206,10 @@ def build_submodule_chunks(transcript_data: Dict[str, List[Dict[str, str]]]) -> 
 # Embedding Generation (Azure text-embedding-3-small)
 # ----------------------------
 
+"""
+
 def _get_embedding(text: str) -> List[float]:
-    """Generate a single embedding vector from Azure OpenAI."""
+    Generate a single embedding vector from Azure OpenAI.
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
     api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
@@ -224,9 +226,12 @@ def _get_embedding(text: str) -> List[float]:
     resp.raise_for_status()
     return resp.json()["data"][0]["embedding"]
 
+"""
 
+
+"""
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
-    """Cosine similarity between two equal-length vectors."""
+    Cosine similarity between two equal-length vectors.
     dot = sum(x * y for x, y in zip(a, b))
     mag_a = math.sqrt(sum(x * x for x in a))
     mag_b = math.sqrt(sum(x * x for x in b))
@@ -234,6 +239,7 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
         return 0.0
     return dot / (mag_a * mag_b)
 
+"""
 
 def generate_chunk_embeddings(
     chunks_map: Dict[str, List[Dict[str, str]]]
@@ -312,46 +318,28 @@ def retrieve_relevant_chunks(
     embedded_chunks_map: Dict[str, List[Dict]],
     top_k: int = 5,
     min_score: float = 0.1
-) -> tuple:
+):
     """
-    Semantic retrieval: top 10 by cosine similarity → filter < min_score → return top 5.
-    Returns (chunks, max_score).
+    Keyword-based retrieval (temporary replacement for embeddings).
     """
-    # Embed the query
-    try:
-        query_emb = _get_embedding(query)
-    except Exception as e:
-        print(f"[Hellen+] Query embedding failed: {e}")
-        return [], 0.0
 
-    if not query_emb:
-        return [], 0.0
+    query_words = set(query.lower().split())
+    scored = []
 
-    all_candidates = []
-    for sub_name in embedded_chunks_map:
-    #for sub_name in submodule_names:
+    for sub_name in submodule_names:
         for chunk in embedded_chunks_map.get(sub_name, []):
-            chunk_emb = chunk.get("embedding", [])
-            if not chunk_emb:
-                continue
-            score = _cosine_similarity(query_emb, chunk_emb)
-            all_candidates.append((score, chunk))
+            text_words = set(chunk["text"].lower().split())
+            overlap = len(query_words.intersection(text_words))
 
-    if not all_candidates:
+            if overlap > 0:
+                scored.append((overlap, chunk))
+
+    if not scored:
         return [], 0.0
 
-    # Sort all candidates by similarity descending
-    all_candidates.sort(key=lambda x: x[0], reverse=True)
-    max_score = all_candidates[0][0]
+    scored.sort(key=lambda x: x[0], reverse=True)
 
-    # Take top 10, then filter below threshold, then return top 5
-    top_10 = all_candidates[:10]
-    filtered = [(score, chunk) for score, chunk in top_10 if score >= min_score]
-
-    if not filtered:
-        return [], max_score
-
-    return [c[1] for c in filtered[:top_k]], max_score
+    return [c[1] for c in scored[:top_k]], scored[0][0]
 
 
 # ----------------------------
@@ -365,31 +353,17 @@ submodule_chunks_map = build_submodule_chunks(transcript_data)
 print(f"[Hellen+] Loaded transcripts for {len(transcript_data)} submodules")
 print(f"[Hellen+] Total chunks: {sum(len(v) for v in submodule_chunks_map.values())}")
 
-
-print("TEST EMBEDDING START")
-
-try:
-    emb = _get_embedding("Hello world")
-    print("Embedding length:", len(emb))
-except Exception as e:
-    print("Embedding test failed:", e)
-
-try:
-    if _cache_is_valid(TRANSCRIPT_FILE, EMBEDDING_CACHE_FILE):
-        # Fast path: load from disk cache
-        embedded_chunks_map = load_embedded_chunks_from_cache(EMBEDDING_CACHE_FILE)
-    else:
-        # Slow path: generate embeddings and save to cache
-        print("[Hellen+] No valid cache found. Generating embeddings (this may take a minute)...")
-        embedded_chunks_map = generate_chunk_embeddings(submodule_chunks_map)
-        save_embedded_chunks_to_cache(embedded_chunks_map, EMBEDDING_CACHE_FILE)
-except Exception as e:
-    print(f"[Hellen+] WARNING: Embedding initialization failed: {e}")
-    print("[Hellen+] Hellen+ will have degraded retrieval quality.")
-    embedded_chunks_map = {
-        sub: [{**c, "embedding": []} for c in chunks]
-        for sub, chunks in submodule_chunks_map.items()
-    }
+# TEMP: embeddings disabled
+embedded_chunks_map = {
+    sub: [{**c, "embedding": []} for c in chunks]
+    for sub, chunks in submodule_chunks_map.items()
+}
+#print(f"[Hellen+] WARNING: Embedding initialization failed: {e}")
+#print("[Hellen+] Hellen+ will have degraded retrieval quality.")
+#embedded_chunks_map = {
+#    sub: [{**c, "embedding": []} for c in chunks]
+#    for sub, chunks in submodule_chunks_map.items()
+#}
 
 # ----------------------------
 # Database Dependency
