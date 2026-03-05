@@ -203,7 +203,10 @@ def _get_embedding(text: str) -> List[float]:
     embedding_model = "text-embedding-3-small"
 
     url = f"{azure_endpoint}/deployments/{embedding_model}/embeddings?api-version={api_version}"
-    headers = {"Content-Type": "application/json", "api-key": api_key}
+    headers = {
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Key": api_key
+    }
     body = {"input": text[:8000]}  # tiktoken safety: 8k chars ~ ≤ 8k tokens
 
     resp = http_requests.post(url, headers=headers, json=body, timeout=30)
@@ -316,7 +319,8 @@ def retrieve_relevant_chunks(
         return [], 0.0
 
     all_candidates = []
-    for sub_name in submodule_names:
+    for sub_name in embedded_chunks_map:
+    #for sub_name in submodule_names:
         for chunk in embedded_chunks_map.get(sub_name, []):
             chunk_emb = chunk.get("embedding", [])
             if not chunk_emb:
@@ -1272,7 +1276,10 @@ def hellen_chat(data: HellenChatRequest):
     api_version = os.getenv("AZURE_OPENAI_API_VERSION")
     openai_url = f"{azure_endpoint}/deployments/{deployment}/chat/completions?api-version={api_version}"
 
-    headers = {"Content-Type": "application/json", "api-key": api_key}
+    headers = {
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Key": api_key
+    }
     body = {"messages": messages, "temperature": 0, "max_tokens": 1000}
 
     try:
@@ -1327,7 +1334,10 @@ def hellen_chat_stream(data: HellenChatRequest):
     api_version = os.getenv("AZURE_OPENAI_API_VERSION")
     openai_url = f"{azure_endpoint}/deployments/{deployment}/chat/completions?api-version={api_version}"
 
-    headers = {"Content-Type": "application/json", "api-key": api_key}
+    headers = {
+        "Content-Type": "application/json",
+        "Ocp-Apim-Subscription-Key": api_key
+    }
     body = {
         "messages": messages,
         "temperature": 0,
