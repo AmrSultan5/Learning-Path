@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { X, Send, User, Clock, BookOpen, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import { useSound } from '@/utils/sounds';
+import ReactMarkdown from "react-markdown";
 
 interface HellenPlusChatModalProps {
     isOpen: boolean;
@@ -304,8 +305,8 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
                                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                                         </div>
                                     ) : (
-                                        <p className="text-sm leading-relaxed">
-                                            {formatMessageText(message.text)}
+                                        <p className="text-sm leading-relaxed prose prose-sm max-w-none">
+                                            <ReactMarkdown>{message.text}</ReactMarkdown>
                                             {/* Blinking cursor while streaming */}
                                             {message.isStreaming && (
                                                 <span className="inline-block w-0.5 h-4 bg-gray-500 ml-0.5 animate-pulse" />
