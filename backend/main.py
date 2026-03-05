@@ -218,7 +218,7 @@ def _get_embedding(text: str) -> List[float]:
     url = f"{azure_endpoint}/deployments/{embedding_deployment}/embeddings?api-version={api_version}"
     headers = {
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": api_key
+        "api-key": api_key
     }
     body = {"input": text[:8000]}  # tiktoken safety: 8k chars ~ ≤ 8k tokens
 
@@ -1270,7 +1270,7 @@ def hellen_chat(data: HellenChatRequest):
 
     headers = {
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": api_key
+        "api-key": api_key
     }
     body = {"messages": messages, "temperature": 0, "max_tokens": 1000}
 
@@ -1328,7 +1328,7 @@ def hellen_chat_stream(data: HellenChatRequest):
 
     headers = {
         "Content-Type": "application/json",
-        "Ocp-Apim-Subscription-Key": api_key
+        "api-key": api_key
     }
     body = {
         "messages": messages,
