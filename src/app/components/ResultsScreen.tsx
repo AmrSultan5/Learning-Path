@@ -1,9 +1,10 @@
-import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X, User } from 'lucide-react';
+import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X, User, Sparkles } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
 import { useState, useEffect, useMemo } from 'react';
 import { PathChatModal } from '@/app/components/PathChatModal';
+import { HellenPlusChatModal } from '@/app/components/HellenPlusChatModal';
 import { useSound } from '@/utils/sounds';
 import { ExternalLink } from 'lucide-react';
 
@@ -119,6 +120,9 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const API_BASE = import.meta.env.VITE_API_URL;
+
+  // Hellen+ chat state
+  const [hellenModule, setHellenModule] = useState<{ moduleName: string; submoduleNames: string[] } | null>(null);
 
   // Naming modal state
   const [showNamingModal, setShowNamingModal] = useState(false);
@@ -516,6 +520,21 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                               >
                                 Mark Complete
                               </button>
+
+                              {/* Hellen+ Button */}
+                              <button
+                                onClick={() => {
+                                  playClick();
+                                  setHellenModule({
+                                    moduleName: module.module_name,
+                                    submoduleNames: module.submodules.map((s: any) => s.name)
+                                  });
+                                }}
+                                className="text-xs bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white px-3 py-1.5 rounded-full hover:shadow-md transition-all flex items-center gap-1.5 flex-shrink-0 ml-2"
+                              >
+                                <Sparkles className="w-3 h-3" />
+                                Hellen+
+                              </button>
                             </div>
 
                             {/* Module Progress */}
@@ -674,6 +693,16 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
           isOpen={isModalOpen}
           onClose={closeModal}
           learningPath={selectedPath}
+        />
+      )}
+
+      {/* Hellen+ Chat Modal */}
+      {hellenModule && (
+        <HellenPlusChatModal
+          isOpen={!!hellenModule}
+          onClose={() => setHellenModule(null)}
+          moduleName={hellenModule.moduleName}
+          submoduleNames={hellenModule.submoduleNames}
         />
       )}
     </div>
