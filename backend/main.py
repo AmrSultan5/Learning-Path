@@ -323,12 +323,12 @@ def retrieve_relevant_chunks(
     Keyword-based retrieval (temporary replacement for embeddings).
     """
 
-    query_words = set(query.lower().split())
+    query_words = set(re.findall(r"\b\w+\b", query.lower()))
     scored = []
 
     for sub_name in submodule_names:
         for chunk in embedded_chunks_map.get(sub_name, []):
-            text_words = set(chunk["text"].lower().split())
+            text_words = set(re.findall(r"\b\w+\b", chunk["text"].lower()))
             overlap = len(query_words.intersection(text_words))
 
             if overlap > 0:
