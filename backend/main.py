@@ -323,29 +323,7 @@ def retrieve_relevant_chunks(
     Keyword-based retrieval (temporary replacement for embeddings).
     """
 
-    STOPWORDS = {
-        "the","a","an","is","are","am","was","were",
-        "i","me","my","mine","you","your","yours",
-        "he","she","it","we","they","them","our","their",
-
-        "and","or","but","not",
-        "to","from","at","on","in","by","for","of","with","about","as",
-
-        "what","which","who","how","when","where","why",
-
-        "can","could","will","would","should","do","does","did",
-
-        "hi","hello","hey","thanks","thank","thankyou","thx","ty",
-
-        "ok","okay","alright","cool","nice","great","good","bad",
-
-        "very","really","just","only","also","too","please"
-    }
-
-    query_words = {
-        w for w in re.findall(r"\b\w+\b", query.lower())
-        if w not in STOPWORDS
-    }
+    query_words = set(re.findall(r"\b\w+\b", query.lower()))
     scored = []
 
     for sub_name in submodule_names:
