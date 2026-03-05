@@ -19,16 +19,11 @@ import math
 
 load_dotenv()
 
-#EMBEDDING_CACHE_FILE = os.path.join(
-#    os.path.dirname(__file__),
-#    "data",
-#    "transcript_embeddings.json"
-#)
-
-# Force-delete cache on startup (temporary fix)
-#if os.path.exists(EMBEDDING_CACHE_FILE):
-#    os.remove(EMBEDDING_CACHE_FILE)
-#    print("[Hellen+] Deleted old embedding cache")
+EMBEDDING_CACHE_FILE = os.path.join(
+    os.path.dirname(__file__),
+    "data",
+    "transcript_embeddings.json"
+)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -151,7 +146,7 @@ def parse_transcripts_with_timestamps(filepath: str) -> Dict[str, List[Dict[str,
     return result
 
 
-def chunk_segments(segments: List[Dict[str, str]], chunk_size: int = 2000, overlap: int = 400) -> List[Dict[str, str]]:
+def chunk_segments(segments: List[Dict[str, str]], chunk_size: int = 800, overlap: int = 150) -> List[Dict[str, str]]:
     """
     Split transcript segments into overlapping chunks of ~chunk_size characters.
     Fix: each chunk uses the segment's own submodule name (not the first segment's).
@@ -206,32 +201,34 @@ def build_submodule_chunks(transcript_data: Dict[str, List[Dict[str, str]]]) -> 
 # Embedding Generation (Azure text-embedding-3-small)
 # ----------------------------
 
-"""
 
 def _get_embedding(text: str) -> List[float]:
-    Generate a single embedding vector from Azure OpenAI.
     api_key = os.getenv("AZURE_OPENAI_API_KEY")
     azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
-    api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-01")
     embedding_deployment = os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT")
 
     url = f"{azure_endpoint}/deployments/{embedding_deployment}/embeddings?api-version={api_version}"
+
     headers = {
         "Content-Type": "application/json",
         "api-key": api_key
     }
-    body = {"input": text[:8000]}  # tiktoken safety: 8k chars ~ ≤ 8k tokens
+
+    body = {
+        "input": text.replace("\n", " ")[:8000]
+    }
 
     resp = http_requests.post(url, headers=headers, json=body, timeout=30)
     resp.raise_for_status()
+
     return resp.json()["data"][0]["embedding"]
 
-"""
 
 
-"""
+
 def _cosine_similarity(a: List[float], b: List[float]) -> float:
-    Cosine similarity between two equal-length vectors.
+    """Cosine similarity between two equal-length vectors."""
     dot = sum(x * y for x, y in zip(a, b))
     mag_a = math.sqrt(sum(x * x for x in a))
     mag_b = math.sqrt(sum(x * x for x in b))
@@ -239,7 +236,6 @@ def _cosine_similarity(a: List[float], b: List[float]) -> float:
         return 0.0
     return dot / (mag_a * mag_b)
 
-"""
 
 def generate_chunk_embeddings(
     chunks_map: Dict[str, List[Dict[str, str]]]
@@ -311,35 +307,104 @@ def save_embedded_chunks_to_cache(embedded_map: Dict[str, List[Dict]], cache_fil
     total = len(flat_list)
     print(f"[Hellen+] Saved {total} embedded chunks to cache: {cache_file}")
 
+def rewrite_query_for_retrieval(query: str) -> str:
+    """
+    Use GPT to rewrite the user query into a better semantic search query.
+    """
+
+    api_key = os.getenv("AZURE_OPENAI_API_KEY")
+    azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+    deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
+    api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+
+    openai_url = f"{azure_endpoint}/deployments/{deployment}/chat/completions?api-version={api_version}"
+
+    headers = {
+        "Content-Type": "application/json",
+        "api-key": api_key
+    }
+
+    prompt = f"""
+Rewrite the following user question into a short semantic search query
+that would best match educational transcript content.
+
+User question:
+{query}
+
+Return ONLY the rewritten query.
+"""
+
+    body = {
+        "messages": [
+            {"role": "system", "content": "You are a search query optimizer."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0,
+        "max_tokens": 50
+    }
+
+    try:
+        response = http_requests.post(openai_url, headers=headers, json=body, timeout=10)
+        if response.status_code == 200:
+            rewritten = response.json()["choices"][0]["message"]["content"].strip()
+            print(f"[Hellen+] Query rewritten: '{query}' → '{rewritten}'")
+            return rewritten
+    except Exception as e:
+        print(f"[Hellen+] Query rewrite failed: {e}")
+
+    return query
+
 
 def retrieve_relevant_chunks(
     query: str,
     submodule_names: List[str],
     embedded_chunks_map: Dict[str, List[Dict]],
     top_k: int = 5,
-    min_score: float = 0.1
+    min_score: float = 0.2
 ):
     """
-    Keyword-based retrieval (temporary replacement for embeddings).
+    Semantic retrieval with dynamic context filtering.
     """
 
-    query_words = set(re.findall(r"\b\w+\b", query.lower()))
+    try:
+        # Rewrite query for better retrieval
+        search_query = rewrite_query_for_retrieval(query)
+
+        query_embedding = _get_embedding(search_query)
+    except Exception as e:
+        print(f"[Hellen+] Query embedding failed: {e}")
+        return [], 0.0
+
     scored = []
 
     for sub_name in submodule_names:
         for chunk in embedded_chunks_map.get(sub_name, []):
-            text_words = set(re.findall(r"\b\w+\b", chunk["text"].lower()))
-            overlap = len(query_words.intersection(text_words))
 
-            if overlap > 0:
-                scored.append((overlap, chunk))
+            emb = chunk.get("embedding")
+            if not emb:
+                continue
+
+            score = _cosine_similarity(query_embedding, emb)
+
+            if score >= min_score:
+                scored.append((score, chunk))
 
     if not scored:
         return [], 0.0
 
+    # Sort by similarity
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    return [c[1] for c in scored[:top_k]], scored[0][0]
+    best_score = scored[0][0]
+
+    # 🔥 Dynamic context filtering
+    filtered = [
+        (score, chunk)
+        for score, chunk in scored
+        if score >= best_score * 0.75
+    ]
+
+    return [c[1] for c in filtered[:top_k]], best_score
 
 
 # ----------------------------
@@ -347,23 +412,41 @@ def retrieve_relevant_chunks(
 # ----------------------------
 
 TRANSCRIPT_FILE = os.path.join(os.path.dirname(__file__), "data", "Video transcripts.txt")
+
 transcript_data = parse_transcripts_with_timestamps(TRANSCRIPT_FILE)
 submodule_chunks_map = build_submodule_chunks(transcript_data)
 
 print(f"[Hellen+] Loaded transcripts for {len(transcript_data)} submodules")
 print(f"[Hellen+] Total chunks: {sum(len(v) for v in submodule_chunks_map.values())}")
 
-# TEMP: embeddings disabled
-embedded_chunks_map = {
-    sub: [{**c, "embedding": []} for c in chunks]
-    for sub, chunks in submodule_chunks_map.items()
-}
-#print(f"[Hellen+] WARNING: Embedding initialization failed: {e}")
-#print("[Hellen+] Hellen+ will have degraded retrieval quality.")
-#embedded_chunks_map = {
-#    sub: [{**c, "embedding": []} for c in chunks]
-#    for sub, chunks in submodule_chunks_map.items()
-#}
+try:
+
+    if _cache_is_valid(TRANSCRIPT_FILE, EMBEDDING_CACHE_FILE):
+
+        embedded_chunks_map = load_embedded_chunks_from_cache(EMBEDDING_CACHE_FILE)
+
+    else:
+
+        print("[Hellen+] No valid embedding cache found. Generating embeddings...")
+
+        embedded_chunks_map = generate_chunk_embeddings(submodule_chunks_map)
+
+        save_embedded_chunks_to_cache(
+            embedded_chunks_map,
+            EMBEDDING_CACHE_FILE
+        )
+
+        print("[Hellen+] Embeddings cached successfully")
+
+except Exception as e:
+
+    print(f"[Hellen+] WARNING: Embedding initialization failed: {e}")
+    print("[Hellen+] Falling back to empty embeddings")
+
+    embedded_chunks_map = {
+        sub: [{**c, "embedding": []} for c in chunks]
+        for sub, chunks in submodule_chunks_map.items()
+    }
 
 # ----------------------------
 # Database Dependency
@@ -1200,6 +1283,20 @@ def _build_hellen_context_and_sources(
         min_score=0.1
     )
 
+    # 🔎 Fallback retrieval across the entire module
+    if not relevant_chunks:
+
+        print("[Hellen+] No results in selected submodules — trying full module search")
+
+        all_submodules = list(embedded_chunks_map.keys())
+
+        relevant_chunks, max_score = retrieve_relevant_chunks(
+            query=data.message,
+            submodule_names=all_submodules,
+            embedded_chunks_map=embedded_chunks_map,
+            top_k=5,
+            min_score=0.15
+        )
     if not relevant_chunks:
         return None, None, None
 
