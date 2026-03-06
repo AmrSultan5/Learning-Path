@@ -517,7 +517,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                               </button>
 
                               {/* Hellen+ Button */}
-                              <div className="flex items-center gap-1 ml-3 group">
+                              <div className="relative flex items-center ml-3 group">
                                 <button
                                   onClick={() => {
                                     playClick();
@@ -526,14 +526,31 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                                       submoduleNames: module.submodules.map((s: any) => s.name)
                                     });
                                   }}
-                                  title="Ask Hellen+ about this module"
                                   className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-red-50 transition-all"
                                 >
                                   <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
-                                  <span className="flex items-center gap-1 text-xs text-gray-600 group-hover:text-[#F40009]">
+                                  <span className="text-xs text-gray-600 group-hover:text-[#F40009]">
                                     Ask Hellen+
                                   </span>
                                 </button>
+
+                                {/* Custom Tooltip */}
+                                <div className="
+                                  absolute bottom-full mb-2 left-1/2 -translate-x-1/2
+                                  whitespace-nowrap
+                                  bg-gray-900 text-white text-xs
+                                  px-3 py-1.5 rounded-md shadow-lg
+                                  opacity-0 group-hover:opacity-100
+                                  pointer-events-none
+                                  transition-all duration-200
+                                  translate-y-1 group-hover:translate-y-0
+                                  z-20
+                                ">
+                                  Ask Hellen+ about this module
+
+                                  {/* Tooltip Arrow */}
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                </div>
                               </div>
                             </div>
 
