@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, MessageCircle, ArrowLeft } from 'lucide-react';
-import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
+import hellenLogo from '@/assets/hellen-logo-transparent-background.png';
 import cocaColaHBCLogo from '@/assets/cch-logo-transparent-background.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
 import { useSound } from '@/utils/sounds';
@@ -617,7 +617,13 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
           }}
         >
           <div className="flex items-center gap-3">
-            <img src={hellenLogo} alt="MAILA" className="h-7" />
+              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 backdrop-blur border border-white/20">
+              <img
+                src={hellenLogo}
+                alt="MAILA"
+                className="h-5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
+              />
+            </div>
             <div>
               <h2 className="text-lg">Learning Assistant</h2>
               <p className="text-xs text-white/80">Here to help you find your path</p>
@@ -626,7 +632,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
           <img
             src={cocaColaHBCLogo}
             alt="Coca-Cola HBC"
-            className="h-7 drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
+            className="h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
           />
         </div>
 
