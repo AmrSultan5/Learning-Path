@@ -322,9 +322,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
           </div>
           {aiSummary?.profile_summary ? (
             <p className="text-gray-700 leading-relaxed">
-              {/^(you|your)/i.test(aiSummary.profile_summary.trimStart())
-                ? aiSummary.profile_summary
-                : `You are ${aiSummary.profile_summary.charAt(0).toLowerCase()}${aiSummary.profile_summary.slice(1)}`}
+              {aiSummary.profile_summary}
             </p>
           ) : (
             <div className="grid md:grid-cols-4 gap-4">

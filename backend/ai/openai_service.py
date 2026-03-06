@@ -228,9 +228,10 @@ First, generate a concise narrative summary of the user's profile.
 
 The summary must:
 - Be maximum 100 words.
-- Be written in natural language.
+- Be written in second person, directly addressing the user (e.g. start with "You are...").
 - Describe the user's current role, their Data/Analytics/AI proficiency level (NOT their seniority in their job function — the experience level they selected reflects their knowledge of Data, Analytics & AI, not their professional level), and their learning goals.
 - Be suitable for display on a "Your Profile" section in a UI.
+- Do NOT use third-person phrases like "The user is..." or "This user...".
 
 Return it as:
 
