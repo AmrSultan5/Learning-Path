@@ -531,7 +531,6 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                                 >
                                   <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
                                   <span className="flex items-center gap-1 text-xs text-gray-600 group-hover:text-[#F40009]">
-                                    <Sparkles className="w-3 h-3" />
                                     Ask Hellen+
                                   </span>
                                 </button>
