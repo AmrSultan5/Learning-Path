@@ -265,7 +265,6 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <img src={hellenLogo} alt="Hellen" className="h-7 opacity-90" />
                         <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center transition-all">
                             <X className="w-5 h-5" />
                         </button>
