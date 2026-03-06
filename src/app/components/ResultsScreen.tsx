@@ -482,7 +482,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                           <div key={moduleIndex}>
 
                             {/* Module Title */}
-                            <div className="flex justify-between items-start mb-2">
+                            <div className="flex justify-between items-center mb-2">
                               <div className="flex-1">
                                 <div className="flex items-center gap-3">
                                   <h4 className="text-lg font-semibold text-gray-800">
@@ -523,7 +523,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                                     submoduleNames: module.submodules.map((s: any) => s.name)
                                   });
                                 }}
-                                className="bg-gradient-to-r from-[#F40009] to-[#DC0012] px-3 py-1.5 rounded-full hover:shadow-md transition-all flex items-center flex-shrink-0 ml-2"
+                                className="p-1 rounded-full hover:opacity-80 transition-all flex items-center flex-shrink-0 ml-2"
                               >
                                 <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
                               </button>
