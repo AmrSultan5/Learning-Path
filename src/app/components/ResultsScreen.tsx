@@ -419,7 +419,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
 
                   <div
                     key={index}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden"
+                    className="bg-white rounded-2xl shadow-lg overflow-visible"
                   >
                     <div className="bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white p-6">
                       <div className="flex items-start gap-4 mb-4">
