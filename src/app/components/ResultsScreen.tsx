@@ -1,5 +1,6 @@
 import { RotateCcw, CheckCircle2, BookOpen, Clock, Target, Lightbulb, MessageCircle, Star, X, User, Sparkles } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
+import hellenLogoTransparent from '@/assets/hellen-logo-transparent-background.png';
 import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
 import { useState, useEffect, useMemo } from 'react';
@@ -429,10 +430,6 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                             {path.learning_path}
                           </h3>
 
-                          <p className="text-white/90 mb-3">
-                            AI selected this learning journey based on your {profile.jobFunction} role and {profile.experienceLevel} experience.
-                          </p>
-
                           {/* Star Rating */}
                           {(() => {
                             const partRating = computePartRating(path);
@@ -446,15 +443,11 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                           <div className="flex flex-col text-sm mt-2 gap-1">
                             <div className="flex items-center gap-2">
                               <Clock className="w-4 h-4" />
-                              <span>
-                                {weeklyHours} hrs/week
-                              </span>
-                            </div>
-
-                            <div className="text-xs text-white/90">
-                              Total: {formatMinutes(pathTotalMinutes)} ·
-                              Completed: {formatMinutes(pathCompletedMinutes)} ·
-                              Remaining: {formatMinutes(pathRemainingMinutes)}
+                              <div className="text-xs text-white/90">
+                                Total: {formatMinutes(pathTotalMinutes)} ·
+                                Completed: {formatMinutes(pathCompletedMinutes)} ·
+                                Remaining: {formatMinutes(pathRemainingMinutes)}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -530,10 +523,9 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                                     submoduleNames: module.submodules.map((s: any) => s.name)
                                   });
                                 }}
-                                className="text-xs bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white px-3 py-1.5 rounded-full hover:shadow-md transition-all flex items-center gap-1.5 flex-shrink-0 ml-2"
+                                className="bg-gradient-to-r from-[#F40009] to-[#DC0012] px-3 py-1.5 rounded-full hover:shadow-md transition-all flex items-center flex-shrink-0 ml-2"
                               >
-                                <Sparkles className="w-3 h-3" />
-                                Hellen+
+                                <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
                               </button>
                             </div>
 
