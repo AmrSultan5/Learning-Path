@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, User, Clock, BookOpen, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Send, User, Clock, BookOpen, ChevronDown, ChevronUp } from 'lucide-react';
 import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
+import hellenLogoTransparent from '@/assets/hellen-logo-transparent-background.png';
 import { useSound } from '@/utils/sounds';
 import ReactMarkdown from "react-markdown";
 
@@ -252,8 +253,8 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
                 {/* Header */}
                 <div className="bg-gradient-to-r from-[#F40009] to-[#DC0012] text-white p-4 flex items-center justify-between flex-shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
-                            <Sparkles className="w-5 h-5" />
+                        <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center p-1">
+                            <img src={hellenLogoTransparent} alt="Hellen+" className="h-full" />
                         </div>
                         <div>
                             <h3 className="text-lg font-semibold flex items-center gap-2">
@@ -288,9 +289,9 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
                     {messages.map((message, index) => (
                         <div key={index} className={`flex gap-2 ${message.sender === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                             {/* Avatar */}
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.sender === 'bot' ? 'bg-[#F40009]' : 'bg-gray-300'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${message.sender === 'bot' ? '' : 'bg-gray-300'}`}>
                                 {message.sender === 'bot'
-                                    ? <Sparkles className="w-4 h-4 text-white" />
+                                    ? <img src={hellenLogoTransparent} alt="Hellen+" className="w-8 h-8 object-contain" />
                                     : <User className="w-4 h-4 text-gray-600" />
                                 }
                             </div>
