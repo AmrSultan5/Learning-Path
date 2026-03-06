@@ -321,7 +321,11 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
             <h2 className="text-xl text-gray-800">Your Profile</h2>
           </div>
           {aiSummary?.profile_summary ? (
-            <p className="text-gray-700 leading-relaxed">{aiSummary.profile_summary}</p>
+            <p className="text-gray-700 leading-relaxed">
+              {/^(you|your)/i.test(aiSummary.profile_summary.trimStart())
+                ? aiSummary.profile_summary
+                : `You are ${aiSummary.profile_summary.charAt(0).toLowerCase()}${aiSummary.profile_summary.slice(1)}`}
+            </p>
           ) : (
             <div className="grid md:grid-cols-4 gap-4">
               <div className="bg-gray-50 rounded-lg p-4">
@@ -329,7 +333,7 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                 <p className="text-gray-800">{formatJobFunction(profile.jobFunction)}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600 mb-1">Experience</p>
+                <p className="text-sm text-gray-600 mb-1">Data, Analytics & AI Level</p>
                 <p className="text-gray-800 capitalize">{profile.experienceLevel}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
