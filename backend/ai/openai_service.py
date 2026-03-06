@@ -229,7 +229,7 @@ First, generate a concise narrative summary of the user's profile.
 The summary must:
 - Be maximum 100 words.
 - Be written in natural language.
-- Describe the user's current role, experience level, and learning goals.
+- Describe the user's current role, their Data/Analytics/AI proficiency level (NOT their seniority in their job function — the experience level they selected reflects their knowledge of Data, Analytics & AI, not their professional level), and their learning goals.
 - Be suitable for display on a "Your Profile" section in a UI.
 
 Return it as:
@@ -275,7 +275,13 @@ Quality is more important than quantity.
 EXPERIENCE LEVEL ADAPTATION
 ----------------------------------------------------
 
-You must adapt recommendations to the user's experience level.
+IMPORTANT: The experience level (beginner / intermediate / advanced) reflects the user's proficiency
+in Data, Analytics & AI — NOT their seniority or years of experience in their job function.
+Do NOT describe a user as e.g. "an advanced-level finance professional" — the level refers only to
+their data and analytics knowledge. A user can be a senior professional in their field but a beginner
+in data skills, or vice versa.
+
+You must adapt recommendations to the user's Data, Analytics & AI experience level.
 
 BEGINNER:
 - Include foundational modules
