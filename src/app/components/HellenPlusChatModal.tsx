@@ -82,7 +82,7 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
         if (!userMessage.trim() || isTyping) return;
 
         setInput('');
-        playTyping();
+        //playTyping();
 
         // Add user message
         setMessages(prev => [...prev, { text: userMessage, sender: 'user' }]);
@@ -380,7 +380,7 @@ export function HellenPlusChatModal({ isOpen, onClose, moduleName, submoduleName
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); }
-                                if (e.key.length === 1 || e.key === 'Backspace') playTyping();
+                                if (e.key.length === 1 || e.key === 'Backspace') { /*playTyping()*/ }
                             }}
                             placeholder="Ask about this module, or try a quick action above..."
                             disabled={isTyping}

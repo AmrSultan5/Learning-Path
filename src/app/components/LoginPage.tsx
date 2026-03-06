@@ -71,7 +71,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    playTyping();
+    //playTyping();
     setUsername(e.target.value);
     setError('');
   };
