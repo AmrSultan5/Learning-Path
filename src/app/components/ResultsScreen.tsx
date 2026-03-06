@@ -517,18 +517,25 @@ export function ResultsScreen({ profile, username, learningPathId, aiSummary, is
                               </button>
 
                               {/* Hellen+ Button */}
-                              <button
-                                onClick={() => {
-                                  playClick();
-                                  setHellenModule({
-                                    moduleName: module.module_name,
-                                    submoduleNames: module.submodules.map((s: any) => s.name)
-                                  });
-                                }}
-                                className="p-1 rounded-full hover:opacity-80 transition-all flex items-center flex-shrink-0 ml-2"
-                              >
-                                <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
-                              </button>
+                              <div className="flex items-center gap-1 ml-3 group">
+                                <button
+                                  onClick={() => {
+                                    playClick();
+                                    setHellenModule({
+                                      moduleName: module.module_name,
+                                      submoduleNames: module.submodules.map((s: any) => s.name)
+                                    });
+                                  }}
+                                  title="Ask Hellen+ about this module"
+                                  className="flex items-center gap-1 px-2 py-1 rounded-full hover:bg-red-50 transition-all"
+                                >
+                                  <img src={hellenLogoTransparent} alt="Hellen+" className="h-5" />
+                                  <span className="flex items-center gap-1 text-xs text-gray-600 group-hover:text-[#F40009]">
+                                    <Sparkles className="w-3 h-3" />
+                                    Ask Hellen+
+                                  </span>
+                                </button>
+                              </div>
                             </div>
 
                             {/* Module Progress */}
