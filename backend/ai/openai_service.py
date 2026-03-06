@@ -229,9 +229,39 @@ First, generate a concise narrative summary of the user's profile.
 The summary must:
 - Be maximum 100 words.
 - Be written in second person, directly addressing the user (e.g. start with "You are...").
-- Describe the user's current role, their Data/Analytics/AI proficiency level (NOT their seniority in their job function — the experience level they selected reflects their knowledge of Data, Analytics & AI, not their professional level), and their learning goals.
+- Describe the user's current job function, their Data/Analytics/AI proficiency level, and their learning goals.
+- The Data/Analytics/AI experience level refers ONLY to their proficiency with Data, Analytics, and AI — NOT their seniority in their job function.
+- Do NOT merge the job function and the experience level into a single phrase (e.g. do NOT write "advanced operations professional").
 - Be suitable for display on a "Your Profile" section in a UI.
 - Do NOT use third-person phrases like "The user is..." or "This user...".
+
+The summary MUST clearly distinguish between:
+
+1) The user's JOB FUNCTION  
+   (e.g., Operations, Finance, HR, Marketing)
+
+2) The user's EXPERIENCE LEVEL WITH DATA, ANALYTICS & AI  
+   (Beginner / Intermediate / Professional / Advanced)
+
+IMPORTANT RULE:
+The experience level refers ONLY to the user's knowledge of Data, Analytics & AI.
+It does NOT refer to their seniority in their job function.
+
+For example:
+
+CORRECT:
+"You are working in Operations and have a professional-level proficiency in Data, Analytics, and AI."
+
+INCORRECT:
+"You are a professional operations specialist."
+
+Do NOT merge the role and experience level into a single phrase.
+
+The summary should mention:
+- the user's job function
+- their Data/Analytics/AI proficiency level
+- their learning goals
+- their available learning time if provided
 
 Return it as:
 
