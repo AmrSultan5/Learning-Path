@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, MessageCircle, ArrowLeft } from 'lucide-react';
-import hellenLogo from '@/assets/hellen-logo-transparent-background.png';
-import cocaColaHBCLogo from '@/assets/cch-logo-transparent-background.png';
+import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
+import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
 import type { UserProfile, JobFunction, ExperienceLevel, InterestArea } from '@/app/App';
 import { useSound } from '@/utils/sounds';
 import { Briefcase, Package, Megaphone, DollarSign, Settings, Users as UsersIcon } from 'lucide-react';
@@ -456,7 +456,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
               <button
                 key={func.value}
                 onClick={() => handleQuickSelection(func.value, func.label)}
-                className="flex items-center gap-3 p-4 rounded-2xl border border-gray-200 hover:border-[#F40009] hover:shadow-md hover:bg-red-50 transition-all text-left"
+                className="flex items-center gap-3 p-4 rounded-xl border-2 border-gray-200 hover:border-[#F40009] hover:bg-red-50 transition-all text-left"
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-600">
                   <Icon className="w-5 h-5" />
@@ -477,7 +477,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
               <button
                 key={level.value}
                 onClick={() => handleQuickSelection(level.value, level.label)}
-                className="w-full flex items-start gap-4 p-4 rounded-2xl border border-gray-200 hover:border-[#F40009] hover:shadow-md hover:bg-red-50 transition-all text-left"
+                className="w-full flex items-start gap-4 p-4 rounded-xl border-2 border-gray-200 hover:border-[#F40009] hover:bg-red-50 transition-all text-left"
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 text-gray-600 flex-shrink-0">
                   <Icon className="w-5 h-5" />
@@ -589,7 +589,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
             <button
               key={option.value}
               onClick={() => handleQuickSelection(option.value, option.label)}
-              className="flex items-center justify-center gap-2 p-4 rounded-2xl border border-gray-200 hover:border-[#F40009] hover:shadow-md hover:bg-red-50 transition-all"
+              className="flex items-center justify-center gap-2 p-4 rounded-xl border-2 border-gray-200 hover:border-[#F40009] hover:bg-red-50 transition-all"
             >
               <Clock className="w-5 h-5 text-gray-600" />
               <span className="text-sm text-gray-700">{option.label}</span>
@@ -601,43 +601,22 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
   };
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{
-        background: "linear-gradient(135deg,#f5f5f5,#ececec)"
-      }}
-    >
-      <div className="w-full max-w-3xl h-[85vh] max-h-[800px] bg-white/95 backdrop-blur rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.15)] flex flex-col overflow-hidden border border-gray-200">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl h-[85vh] max-h-[800px] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div
-          className="text-white p-4 flex items-center justify-between flex-shrink-0 relative"
-          style={{
-            background: "radial-gradient(circle at 50% 40%, #ff4a3d 0%, #F40009 60%, #a80000 100%)",
-            boxShadow: "inset 0 8px 20px rgba(255,255,255,0.08), inset 0 -8px 20px rgba(0,0,0,0.35)"
-          }}
-        >
+        <div className="bg-[#F40009] text-white p-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-9 h-9 rounded-full bg-white/10 backdrop-blur border border-white/20">
-              <img
-                src={hellenLogo}
-                alt="MAILA"
-                className="h-5 drop-shadow-[0_2px_6px_rgba(0,0,0,0.3)]"
-              />
-            </div>
+            <img src={hellenLogo} alt="MAILA" className="h-7" />
             <div>
               <h2 className="text-lg">Learning Assistant</h2>
               <p className="text-xs text-white/80">Here to help you find your path</p>
             </div>
           </div>
-          <img
-            src={cocaColaHBCLogo}
-            alt="Coca-Cola HBC"
-            className="h-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.35)]"
-          />
+          <img src={cocaColaHBCLogo} alt="Coca-Cola HBC" className="h-7" />
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0 relative">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {messages.map((message, index) => (
             <div
               key={index}
@@ -655,8 +634,8 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
               </div>
               <div
                 className={`max-w-[70%] rounded-2xl px-4 py-2 ${message.sender === 'bot'
-                  ? 'bg-white border border-gray-200 text-gray-800 shadow-sm'
-                  : 'bg-gradient-to-br from-[#F40009] to-[#c20000] text-white shadow-md'
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'bg-[#F40009] text-white'
                   }`}
               >
                 <p className="text-sm leading-relaxed">{message.text}</p>
@@ -743,7 +722,7 @@ export function HybridChatInterface({ username, onComplete }: HybridChatInterfac
                     handleCustomSubmit();
                   }}
                   disabled={!currentInput.trim() || isTyping}
-                  className="w-11 h-11 bg-gradient-to-br from-[#F40009] to-[#c20000] text-white rounded-full flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg"
+                  className="w-11 h-11 bg-[#F40009] text-white rounded-full flex items-center justify-center hover:bg-[#DC0012] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md flex-shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </button>
