@@ -1,5 +1,5 @@
-import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
-import cocaColaHBCLogo from '@/assets/59218e6eca964424a8f051f5c7fe905235198f2c.png';
+import hellenLogo from '@/assets/hellen-logo-transparent-background.png';
+import cocaColaHBCLogo from '@/assets/cch-logo-transparent-background.png';
 import { Gamepad2, Route } from 'lucide-react';
 
 interface MasterLandingPageProps {

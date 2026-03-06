@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, BookOpen, Calendar, TrendingUp, LogOut, Star, MessageSquare, Send, Pencil, Check } from 'lucide-react';
 import { useSound } from '@/utils/sounds';
-import hellenLogo from '@/assets/a1c07c8833c1385f9acba9acb24b2ea7df9be827.png';
+import hellenLogo from '@/assets/hellen-logo-transparent-background.png';
 import type { UserProfile } from '@/app/App';
 
 export interface SavedLearningPath {
@@ -255,9 +255,7 @@ export function LearningPathsDashboard({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-12 h-12 bg-[#F40009] rounded-xl">
-                <span className="text-2xl font-bold text-white">H+</span>
-              </div>
+              <img src={hellenLogo} alt="Hellen+" className="h-16" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">
                   Hellen+ for AI Academy
